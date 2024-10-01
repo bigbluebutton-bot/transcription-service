@@ -1,9 +1,10 @@
+.vscode
+.vscode/*
 simulate_results/
 simulate_results/*
 .models/
 .models/*
 *.pkl
-*.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
