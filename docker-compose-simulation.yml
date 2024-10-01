@@ -1,0 +1,50 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    # ports:
+    #   - 1000:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - transcription
+
+  transcription-server:
+    container_name: transcription-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - transcription
+    # ports:
+    #   - 8042:8042
+    volumes:
+      - ./.models:/app/.models
+      - ./audio:/app/audio
+      - ./simulate_results:/app/simulate_results
+      - ./logs:/app/logs
+    command: ["python", "simulate.py"]
+    ipc: host
+    tty: true
+    stdin_open: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            capabilities: [gpu]
+
+  prometheus-to-graph:
+    container_name: prometheus-to-graph
+    build:
+      context: https://github.com/JulianKropp/prometheus_to_graph.git
+      dockerfile: Dockerfile
+    networks:
+      - transcription
+    # ports:
+    #   - 5000:5000
+
+networks:
+  transcription:
+    driver: bridge

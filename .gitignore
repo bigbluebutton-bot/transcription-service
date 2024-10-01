@@ -1,3 +1,9 @@
+simulate_results/
+simulate_results/*
+.models/
+.models/*
+*.pkl
+*.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -129,6 +135,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.venv*
+.venv*/
 
 # Spyder project settings
 .spyderproject

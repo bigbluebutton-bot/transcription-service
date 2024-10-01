@@ -1,0 +1,28 @@
+services:
+  transcription-server:
+    container_name: transcription-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - transcription
+    # ports:
+    #   - 8042:8042
+    env_file:
+      - .env
+    volumes:
+      - ./.models:/app/.models
+      - ./logs:/app/logs
+    ipc: host
+    tty: true
+    stdin_open: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            capabilities: [gpu]
+
+networks:
+  transcription:
+    driver: bridge
