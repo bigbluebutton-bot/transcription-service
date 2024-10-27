@@ -13,15 +13,14 @@ services:
     volumes:
       - ./.models:/app/.models
       - ./logs:/app/logs
-    ipc: host
-    tty: true
-    stdin_open: true
     deploy:
       resources:
         reservations:
           devices:
-          - driver: nvidia
-            capabilities: [gpu]
+            - driver: nvidia
+              count: -1
+              capabilities: ["gpu"]
+    restart: "no"
 
 networks:
   transcription:

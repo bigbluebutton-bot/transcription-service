@@ -25,15 +25,15 @@ services:
       - ./simulate_results:/app/simulate_results
       - ./logs:/app/logs
     command: ["python", "simulate.py"]
-    ipc: host
-    tty: true
-    stdin_open: true
+    # # command: ["sleep", "infinity"]
     deploy:
       resources:
         reservations:
           devices:
-          - driver: nvidia
-            capabilities: [gpu]
+            - driver: nvidia
+              count: -1
+              capabilities: ["gpu"]
+    restart: "no"
 
   prometheus-to-graph:
     container_name: prometheus-to-graph
