@@ -37,7 +37,7 @@ class Settings(TypedDict):
     CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN: float
 
 def load_settings() -> Settings:
-    load_dotenv(override=True)
+    # load_dotenv(override=True)
 
     valid_config: bool = True
 
