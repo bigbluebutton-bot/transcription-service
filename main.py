@@ -25,7 +25,8 @@ log = logger.setup_logging()
 
 start_http_server(8042)
 
-# CreateNsAudioPackage, Load_audio, VAD, Faster_Whisper_transcribe, Local_Agreement
+settings = load_settings()
+
 controllers = [
     PipelineController(
         mode=ControllerMode.NOT_PARALLEL,
@@ -37,9 +38,12 @@ controllers = [
                 name="Create_Audio_Buffer",
                 modules=[
                     Create_Audio_Buffer(
-                        last_n_seconds=30
+                        last_n_seconds=settings["AUDIO_BUFFER_LAST_N_SECONDS"],
+                        min_n_seconds=settings["AUDIO_BUFFER_MIN_N_SECONDS"]
                     ),
-                    Rate_Limiter(),
+                    Rate_Limiter(
+                        flowrate_per_second=settings["FLOWRATE_PER_SECOND"]
+                    ),
                 ]
             )
         ]
@@ -53,8 +57,20 @@ controllers = [
             PipelinePhase(
                 name="VADPhase",
                 modules=[
-                    Convert_Audio(),
-                    VAD(),
+                    Convert_Audio(
+                        convert_sample_rate=settings["CONVERT_SAMPLE_RATE"]
+                    ),
+                    VAD(
+                        device = settings["VAD_DEVICE"],
+                        model_path = settings["VAD_MODEL_PATH"],
+                        max_chunk_size = settings["VAD_MAX_CHUNK_SIZE"],
+                        last_time_spoken_offset = settings["VAD_LAST_TIME_SPOKEN_OFFSET"],
+                        vad_onset = settings["VAD_ONSET"],
+                        vad_offset = settings["VAD_OFFSET"],
+                        use_auth_token = None if settings["VAD_USE_AUTH_TOKEN"] == "" else settings["VAD_USE_AUTH_TOKEN"],
+                        model_fp = None if settings["VAD_MODEL_FP"] == "" else settings["VAD_MODEL_FP"],
+                        vad_segmentation_url = settings["VAD_SEGMENTATION_URL"]
+                    ),
                 ]
             )
         ]
@@ -68,7 +84,15 @@ controllers = [
             PipelinePhase(
                 name="WhisperPhase",
                 modules=[
-                    Faster_Whisper_transcribe(),
+                    Faster_Whisper_transcribe(
+                        model_path = settings["FASTER_WHISPER_MODEL_PATH"],
+                        model_size = settings["FASTER_WHISPER_MODEL_SIZE"], #tiny, tiny.en, small, small.en, base, base.en, medium, medium.en, large-v1, large-v2, large-v3
+                        task = settings["FASTER_WHISPER_TASK"], # transcribe, translate
+                        compute_type = settings["FASTER_WHISPER_COMPUTE_TYPE"], # "float16" or "int8"
+                        batching = settings["FASTER_WHISPER_BATCHING"],
+                        batch_size = settings["FASTER_WHISPER_BATCH_SIZE"],
+                        device = settings["FASTER_WHISPER_DEVICE"] # "cuda" or "cpu"
+                    ),
                 ]
             )
         ]
@@ -82,8 +106,9 @@ controllers = [
                 name="OutputPhase",
                 modules=[
                     Confirm_Words(
-                        confirm_if_older_then=1.0,
-                        max_confirmed_words=50
+                        offset = settings["CONFIRM_WORDS_OFFSET"],
+                        max_confirmed_words=settings["CONFIRM_WORDS_MAX_WORDS"],
+                        confirm_if_older_then=settings["CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN"]
                     ),
                 ]
             )
@@ -110,8 +135,6 @@ def healthcheck() -> Tuple[str, int]:
 def main() -> None:
     global STATUS
     STATUS = "starting"
-    
-    settings = load_settings()
 
     # Start the health http-server (flask) in a new thread.
     webserverthread = threading.Thread(target=app.run, kwargs={'debug': False, 'host': settings["HOST"], 'port': settings["HEALTH_CHECK_PORT"]})
@@ -168,8 +191,8 @@ def main() -> None:
 
     # Create server
     host = str(settings["HOST"])
-    tcp_port = int(settings["TCPPORT"])
-    udp_port = int(settings["UDPPORT"])
+    tcp_port = int(str(settings["TCPPORT"]))
+    udp_port = int(str(settings["UDPPORT"]))
     secret_token = str(settings["SECRET_TOKEN"])
     external_host = str(settings["EXTERNALHOST"])
     srv = Server(host, tcp_port, udp_port, secret_token, 4096, 5, 10, 1024, external_host)

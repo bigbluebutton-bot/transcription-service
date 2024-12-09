@@ -17,7 +17,7 @@ log = logger.get_logger()
 class Faster_Whisper_transcribe(Module):
     def __init__(self,
                     model_path: str = ".models/faster-whisper",
-                    model_size: str = "large-v3",
+                    model_size: str = "base", #tiny, tiny.en, small, small.en, base, base.en, medium, medium.en, large-v1, large-v2, large-v3
                     task: str = "transcribe",
                     compute_type: str = "float16", # "float16" or "int8"
                     batching: bool = True,
