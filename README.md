@@ -4,7 +4,7 @@
 
 ## Overview
 
-This project aims to provide live transcription services for BigBlueButton (BBB) meetings, enabling real-time subtitles for participants. The transcription pipeline processes the audio stream from BBB meetings, converts speech to text using advanced speech recognition models, and delivers accurate subtitles to enhance accessibility and engagement. It uses the [stream_pipeline](https://github.com/JulianKropp/stream_pipeline)-framework to process the audio stream. This project is part of a larger project ([BBB Translation Bot repository](https://github.com/bigbluebutton-bot/bbb-translation-bot)).
+This project aims to provide live transcription services for BigBlueButton (BBB) meetings, enabling real-time subtitles for participants. The transcription pipeline processes the audio stream from BBB meetings, converts speech to text using advanced speech recognition models, and delivers accurate subtitles to enhance accessibility and engagement. It uses the [stream_pipeline](https://github.com/bigbluebutton-bot/stream_pipeline)-framework to process the audio stream. This project is part of a larger project ([BBB Translation Bot repository](https://github.com/bigbluebutton-bot/bbb-translation-bot)).
 
 ## Features
 
