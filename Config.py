@@ -31,7 +31,7 @@ class Settings(TypedDict):
     FASTER_WHISPER_COMPUTE_TYPE: str
     FASTER_WHISPER_BATCHING: bool
     FASTER_WHISPER_BATCH_SIZE: int
-    FASTER_WHISPER_DEVICE: str
+    FASTER_WHISPER_DEVICE: list[str]
     CONFIRM_WORDS_OFFSET: float
     CONFIRM_WORDS_MAX_WORDS: int
     CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN: float
@@ -41,7 +41,7 @@ def load_settings() -> Settings:
 
     valid_config: bool = True
 
-    def validate_model(value: Union[str, int, float, bool, None], default: Union[str, int, float, bool, None], env_var: str) -> Union[str, int, float, bool, None]:
+    def validate_model(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
         nonlocal valid_config
         valid_models = ['tiny', 'base', 'small', 'medium', 'large']
         if value not in valid_models:
@@ -50,7 +50,7 @@ def load_settings() -> Settings:
             return default
         return value
 
-    def validate_path(value: Union[str, int, float, bool, None], default: Union[str, int, float, bool, None], env_var: str) -> Union[str, int, float, bool, None]:
+    def validate_path(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
         nonlocal valid_config
         if not isinstance(value, str):
             logging.error(f"Invalid type for setting: {env_var}. Expected a string. Using default value: {default}")
@@ -79,7 +79,7 @@ def load_settings() -> Settings:
                 valid_config = False
                 return default
 
-    def validate_float(value: Union[str, int, float, bool, None], default: Union[str, int, float, bool, None], env_var: str) -> Union[str, int, float, bool, None]:
+    def validate_float(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
         nonlocal valid_config
         try:
             return float(str(value))
@@ -88,7 +88,7 @@ def load_settings() -> Settings:
             valid_config = False
             return default
 
-    def validate_task(value: Union[str, int, float, bool, None], default: Union[str, int, float, bool, None], env_var: str) -> Union[str, int, float, bool, None]:
+    def validate_task(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
         nonlocal valid_config
         valid_tasks = ['transcribe', 'translate']
         if value not in valid_tasks:
@@ -97,7 +97,7 @@ def load_settings() -> Settings:
             return default
         return value
 
-    def validate_int(value: Union[str, int, float, bool, None], default: Union[str, int, float, bool, None], env_var: str) -> Union[str, int, float, bool, None]:
+    def validate_int(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
         nonlocal valid_config
         try:
             return int(str(value))
@@ -106,7 +106,7 @@ def load_settings() -> Settings:
             valid_config = False
             return default
 
-    def validate_bool(value: Union[str, int, float, bool, None], default: Union[str, int, float, bool, None], env_var: str) -> Union[str, int, float, bool, None]:
+    def validate_bool(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
         nonlocal valid_config
         if type(value) != str and type(value) != bool:
             logging.error(f"Invalid boolean value for setting: {env_var}. Expected 'true' or 'false'. Using default value: {default}")
@@ -125,10 +125,22 @@ def load_settings() -> Settings:
                 return True
             else:
                 return False
+            
+    def validate_list_string(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
+        # value can be a list or a string seperated by a comma which has to convert to a list
+        nonlocal valid_config
+        if type(value) == list:
+            return value
+        elif type(value) == str:
+            return value.split(",")
+        else:
+            logging.error(f"Invalid list value for setting: {env_var}. Expected a list of strings or a comma seperated string. Using default value: {default}")
+            valid_config = False
+            return default
 
 
-    def get_variable(env_var: str, default: Union[str, int, float, bool, None], validate_func: Optional[Callable[[Union[str, int, float, bool, None], Union[str, int, float, bool, None], str], Union[str, int, float, bool, None]]] = None) -> Union[str, int, float, bool, None]:
-        value: Union[str, int, float, bool, None] = os.getenv(env_var, default)
+    def get_variable(env_var: str, default: Union[str, int, float, bool, None, list[str]], validate_func: Optional[Callable[[Union[str, int, float, bool, None, list[str]], Union[str, int, float, bool, None, list[str]], str], Union[str, int, float, bool, None, list[str]]]] = None) -> Union[str, int, float, bool, None, list[str]]:
+        value: Union[str, int, float, bool, None, list[str]] = os.getenv(env_var, default)
         if value == "None":
             value = None
         if validate_func:
@@ -162,7 +174,7 @@ def load_settings() -> Settings:
         'FASTER_WHISPER_COMPUTE_TYPE': get_variable('TRANSCRIPTION_FASTER_WHISPER_COMPUTE_TYPE', "float16"), # type: ignore
         'FASTER_WHISPER_BATCHING': get_variable('TRANSCRIPTION_FASTER_WHISPER_BATCHING', True, validate_bool), # type: ignore
         'FASTER_WHISPER_BATCH_SIZE': get_variable('TRANSCRIPTION_FASTER_WHISPER_BATCH_SIZE', 32, validate_int), # type: ignore
-        'FASTER_WHISPER_DEVICE': get_variable('TRANSCRIPTION_FASTER_WHISPER_DEVICE', "cuda"), # type: ignore
+        'FASTER_WHISPER_DEVICE': get_variable('TRANSCRIPTION_FASTER_WHISPER_DEVICE', ["all"], validate_list_string), # type: ignore
         'CONFIRM_WORDS_OFFSET': get_variable('TRANSCRIPTION_CONFIRM_WORDS_OFFSET', 0.3, validate_float), # type: ignore
         'CONFIRM_WORDS_MAX_WORDS': get_variable('TRANSCRIPTION_CONFIRM_WORDS_MAX_WORDS', 50, validate_int), # type: ignore
         'CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN': get_variable('TRANSCRIPTION_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN', 1.0, validate_float), # type: ignore

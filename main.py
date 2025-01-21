@@ -11,7 +11,6 @@ from stream_pipeline.pipeline import Pipeline, ControllerMode, PipelinePhase, Pi
 
 from Config import load_settings
 from StreamServer import Server, Client as StreamClient
-from Client import Client
 from m_convert_audio import Convert_Audio
 from m_create_audio_buffer import Create_Audio_Buffer
 from m_faster_whisper import Faster_Whisper_transcribe
@@ -91,7 +90,7 @@ controllers = [
                         compute_type = settings["FASTER_WHISPER_COMPUTE_TYPE"], # "float16" or "int8"
                         batching = settings["FASTER_WHISPER_BATCHING"],
                         batch_size = settings["FASTER_WHISPER_BATCH_SIZE"],
-                        device = settings["FASTER_WHISPER_DEVICE"] # "cuda" or "cpu"
+                        devices = settings["FASTER_WHISPER_DEVICE"] # "cuda" or "cpu"
                     ),
                 ]
             )
@@ -118,8 +117,6 @@ controllers = [
 
 pipeline = Pipeline[data.AudioData](controllers, name="WhisperPipeline")
 
-instance = pipeline.register_instance()
-
 # Health check http sever
 app = Flask(__name__)
 STATUS = "stopped" # starting, running, stopping, stopped
@@ -141,8 +138,8 @@ def main() -> None:
     webserverthread.daemon = True  # This will ensure the thread stops when the main thread exits
     webserverthread.start()
 
-    client_dict: Dict[StreamClient, Client] = {}        # Dictionary with all connected clients
-    client_dict_mutex = threading.Lock() # Mutex to lock the client_dict
+    client_dict: Dict[str, StreamClient] = {}   # Dictionary with all connected clients (key: instance_id, value: StreamClient)
+    client_dict_mutex = threading.Lock()        # Mutex to lock the client_dict
 
     # Pipeline callbacks
     def callback(dp: DataPackage[data.AudioData]) -> None:
@@ -169,11 +166,18 @@ def main() -> None:
             #     text += word.word + " "
             
             # get client
+            instance_id = dp.pipeline_instance_id
+            print(f"Instance: {instance_id}")
             with client_dict_mutex:
-                for c in client_dict:
-                    client = client_dict[c]
-                    if client._instance == dp.pipeline_instance_id:
-                        client.send(str.encode(text))
+                if not instance_id in client_dict:
+                    log.error(f"Instance {instance_id} not in client_dict!")
+                    pipeline.unregister_instance(instance_id)
+                    return
+                
+                # send text to client
+                client = client_dict[instance_id]
+                client.send_message(str.encode(text))
+
     
     def exit_callback(dp: DataPackage[data.AudioData]) -> None:
         # log.info(f"Exit: {dp.controllers[-1].phases[-1].modules[-1].message}")
@@ -202,19 +206,20 @@ def main() -> None:
         print(f"Connected by {c.tcp_address()}")
 
         # Create new client
-        newclient = Client(c)
-        newclient._instance = instance # TODO
-        # newclient._instance = pipeline.register_instance()
+        new_instance = pipeline.register_instance()
+        
         with client_dict_mutex:
-            client_dict[c] = newclient
+            client_dict[new_instance] = c
 
         # Handle disconnections
         def ondisconnedted(c: StreamClient) -> None:
             print(f"Disconnected by {c.tcp_address()}")
             # Remove client from client_dict
             with client_dict_mutex:
-                if c in client_dict:
-                    del client_dict[c]
+                if c in client_dict.values():
+                    instance_id = [key for key, value in client_dict.items() if value == c][0]
+                    pipeline.unregister_instance(instance_id)
+                    del client_dict[instance_id]
         c.on_disconnected(ondisconnedted)
 
         # Handle timeouts
@@ -222,27 +227,28 @@ def main() -> None:
             print(f"Timeout by {c.tcp_address()}")
             # Remove client from client_dict
             with client_dict_mutex:
-                if c in client_dict:
-                    del client_dict[c]
+                if c in client_dict.values():
+                    instance_id = [key for key, value in client_dict.items() if value == c][0]
+                    pipeline.unregister_instance(instance_id)
+                    del client_dict[instance_id]
         c.on_timeout(ontimeout)
 
         # Handle messages
         def onmsg(c: StreamClient, recv_data: bytes) -> None:
             # print(f"UDP from: {c.tcp_address()}")
             with client_dict_mutex:
-                if not c in client_dict:
-                    print(f"Client {c.tcp_address()} not in list!")
+                if not c in client_dict.values():
+                    print(f"Client not in client_dict")
+                    c.stop()
                     return
-                client = client_dict[c]
-                
-                if client._instance is None:
-                    print(f"Client {c.tcp_address()} has no instance!")
-                    return
+
+
+                instance_id = [key for key, value in client_dict.items() if value == c][0]
             
                 audio_data = data.AudioData(raw_audio_data=recv_data)
                 pipeline.execute(
                                 audio_data, 
-                                client._instance, 
+                                instance_id=instance_id, 
                                 callback=callback, 
                                 exit_callback=exit_callback, 
                                 overflow_callback=overflow_callback, 
