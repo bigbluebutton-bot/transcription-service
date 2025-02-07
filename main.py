@@ -13,7 +13,7 @@ from Config import load_settings
 from StreamServer import Server, Client as StreamClient
 from m_convert_audio import Convert_Audio
 from m_create_audio_buffer import Create_Audio_Buffer
-from m_faster_whisper import Faster_Whisper_transcribe
+from m_faster_whisper import Faster_Whisper_transcribe, WhisperAIManager
 from m_confirm_words import Confirm_Words
 from m_rate_limiter import Rate_Limiter
 from m_vad import VAD
@@ -25,6 +25,16 @@ log = logger.setup_logging()
 start_http_server(8042)
 
 settings = load_settings()
+
+# load whisper singelton
+WhisperAIManager(
+    model_path = settings["FASTER_WHISPER_MODEL_PATH"],
+    model_size = settings["FASTER_WHISPER_MODEL_SIZE"], #tiny, tiny.en, small, small.en, base, base.en, medium, medium.en, large-v1, large-v2, large-v3
+    compute_type = settings["FASTER_WHISPER_COMPUTE_TYPE"], # "float16" or "int8"
+    batching = settings["FASTER_WHISPER_BATCHING"],
+    batch_size = settings["FASTER_WHISPER_BATCH_SIZE"],
+    devices = settings["FASTER_WHISPER_DEVICE"] # "cuda" or "cpu"
+)
 
 controllers = [
     PipelineController(
@@ -84,13 +94,7 @@ controllers = [
                 name="WhisperPhase",
                 modules=[
                     Faster_Whisper_transcribe(
-                        model_path = settings["FASTER_WHISPER_MODEL_PATH"],
-                        model_size = settings["FASTER_WHISPER_MODEL_SIZE"], #tiny, tiny.en, small, small.en, base, base.en, medium, medium.en, large-v1, large-v2, large-v3
                         task = settings["FASTER_WHISPER_TASK"], # transcribe, translate
-                        compute_type = settings["FASTER_WHISPER_COMPUTE_TYPE"], # "float16" or "int8"
-                        batching = settings["FASTER_WHISPER_BATCHING"],
-                        batch_size = settings["FASTER_WHISPER_BATCH_SIZE"],
-                        devices = settings["FASTER_WHISPER_DEVICE"] # "cuda" or "cpu"
                     ),
                 ]
             )
