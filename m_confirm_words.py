@@ -15,7 +15,8 @@ class Confirm_Words(Module):
     def __init__(self,
                     offset: float = 0.3,
                     max_confirmed_words: int = 0,
-                    confirm_if_older_then: float = 2.0
+                    transcribe_confirm_if_older_then: float = 2.0,
+                    translate_confirm_if_older_then: float = 10.0,
                 ) -> None:
         super().__init__(
             ModuleOptions(
@@ -26,8 +27,9 @@ class Confirm_Words(Module):
         )
         self.offset = offset
         self.max_confirmed_words = max_confirmed_words
-        self.confirm_if_older_then: float = confirm_if_older_then # Confirm words if they are older than this value in seconds
-        
+        self.transcribe_confirm_if_older_then = transcribe_confirm_if_older_then  # Confirm words if they are older than this value in seconds
+        self.translate_confirm_if_older_then = translate_confirm_if_older_then
+
         self._confirmed: List[data.Word] = []  # Buffer to store committed words
         self._confirmed_end_time: float = 0.0
         
@@ -109,10 +111,16 @@ class Confirm_Words(Module):
             else:
                 new_unconfirmed.append(new_word)
 
+        confirm_if_older_then = 0.0
+        if dp.data.task == data.Task.TRANSCRIBE:
+            confirm_if_older_then = self.transcribe_confirm_if_older_then
+        elif dp.data.task == data.Task.TRANSLATE:
+            confirm_if_older_then = self.translate_confirm_if_older_then
+
         # 2. Check each new_unconfirmed word if it's older than confirm_if_older_then seconds
         words_to_confirm = []
         for new_word in new_unconfirmed:
-            if audio_buffer_start_after + audio_buffer_time - new_word.end >= self.confirm_if_older_then:
+            if audio_buffer_start_after + audio_buffer_time - new_word.end >= confirm_if_older_then:
                 self._confirmed.append(new_word)
                 words_to_confirm.append(new_word)
 

@@ -158,7 +158,6 @@ class Faster_Whisper_transcribe(Module):
             ),
             name="Whisper-Module"
         )
-        self.task: str = task
         self._ai_manager: WhisperAIManager = WhisperAIManager()
 
     def init_module(self) -> None:
@@ -178,9 +177,9 @@ class Faster_Whisper_transcribe(Module):
         audio_buffer_start_after = dp.data.audio_buffer_start_after
         audio = dp.data.audio_data
         vad_segments=dp.data.vad_result
-        if self.task == "transcribe":
+        if dp.data.task == data.Task.TRANSCRIBE:
             segments, info = self._ai_manager.transcribe(audio, vad_segments)
-        elif self.task == "translate":
+        elif dp.data.task == data.Task.TRANSLATE:
             segments, info = self._ai_manager.translate(audio, vad_segments)
 
         result = []

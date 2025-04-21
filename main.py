@@ -1,4 +1,6 @@
 # main.py
+from dataclasses import dataclass
+import json
 import threading
 import time
 from typing import Dict, List, Tuple
@@ -111,7 +113,8 @@ controllers = [
                     Confirm_Words(
                         offset = settings["CONFIRM_WORDS_OFFSET"],
                         max_confirmed_words=settings["CONFIRM_WORDS_MAX_WORDS"],
-                        confirm_if_older_then=settings["CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN"]
+                        transcribe_confirm_if_older_then=settings["TRANSCRIBE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN"],
+                        translate_confirm_if_older_then=settings["TRANSLATE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN"],
                     ),
                 ]
             )
@@ -133,6 +136,16 @@ def healthcheck() -> Tuple[str, int]:
     else:
         return STATUS, 503
 
+@dataclass
+class Client():
+    """
+    Client class to handle the connection to the server.
+    """
+    instance_id: str
+    task: data.Task
+    stream_client: StreamClient
+
+
 def main() -> None:
     global STATUS
     STATUS = "starting"
@@ -142,7 +155,7 @@ def main() -> None:
     webserverthread.daemon = True  # This will ensure the thread stops when the main thread exits
     webserverthread.start()
 
-    client_dict: Dict[str, StreamClient] = {}   # Dictionary with all connected clients (key: instance_id, value: StreamClient)
+    client_dict: Dict[str, Client] = {}   # Dictionary with all connected clients (key: instance_id, value: StreamClient)
     client_dict_mutex = threading.Lock()        # Mutex to lock the client_dict
 
     # Pipeline callbacks
@@ -166,8 +179,12 @@ def main() -> None:
                 #     text += word.word + "\n"
                 # else:
                 text += word.word + " "
-            # for word in dp.data.unconfirmed_words:
-            #     text += word.word + " "
+            
+            # if the task is translate, add the unconfirmed words to the text
+            if dp.data.task == data.Task.TRANSLATE:
+                for word in dp.data.unconfirmed_words:
+                    text += word.word + " "
+
             
             # get client
             instance_id = dp.pipeline_instance_id
@@ -180,7 +197,7 @@ def main() -> None:
                 
                 # send text to client
                 client = client_dict[instance_id]
-                client.send_message(str.encode(text))
+                client.stream_client.send_message(str.encode(text))
 
     
     def exit_callback(dp: DataPackage[data.AudioData]) -> None:
@@ -213,14 +230,18 @@ def main() -> None:
         new_instance = pipeline.register_instance()
         
         with client_dict_mutex:
-            client_dict[new_instance] = c
+            client_dict[new_instance] = Client(
+                instance_id=new_instance,
+                task=data.Task.TRANSCRIBE, # or data.Task.TRANSLATE
+                stream_client=c
+            )
 
         # Handle disconnections
         def ondisconnedted(c: StreamClient) -> None:
             print(f"Disconnected by {c.tcp_address()}")
             # Remove client from client_dict
             with client_dict_mutex:
-                if c in client_dict.values():
+                if c in [value.stream_client for value in client_dict.values()]:
                     instance_id = [key for key, value in client_dict.items() if value == c][0]
                     pipeline.unregister_instance(instance_id)
                     del client_dict[instance_id]
@@ -231,7 +252,7 @@ def main() -> None:
             print(f"Timeout by {c.tcp_address()}")
             # Remove client from client_dict
             with client_dict_mutex:
-                if c in client_dict.values():
+                if c in [value.stream_client for value in client_dict.values()]:
                     instance_id = [key for key, value in client_dict.items() if value == c][0]
                     pipeline.unregister_instance(instance_id)
                     del client_dict[instance_id]
@@ -241,17 +262,22 @@ def main() -> None:
         def onmsg(c: StreamClient, recv_data: bytes) -> None:
             # print(f"UDP from: {c.tcp_address()}")
             with client_dict_mutex:
-                if not c in client_dict.values():
+                if not c in [value.stream_client for value in client_dict.values()]:
                     print(f"Client not in client_dict")
                     c.stop()
                     return
 
 
-                instance_id = [key for key, value in client_dict.items() if value == c][0]
+                instance_id = [key for key, value in client_dict.items() if value.stream_client == c][0]
+                task = client_dict[instance_id].task
+
             
-                audio_data = data.AudioData(raw_audio_data=recv_data)
+                audio_data = data.AudioData(
+                                            raw_audio_data=recv_data,
+                                            task=task
+                                            )
                 pipeline.execute(
-                                audio_data, 
+                                audio_data,
                                 instance_id=instance_id, 
                                 callback=callback, 
                                 exit_callback=exit_callback, 
@@ -259,9 +285,36 @@ def main() -> None:
                                 outdated_callback=outdated_callback, 
                                 error_callback=error_callback
                                 )
+            
+        def ontcpmsg(c: StreamClient, message: bytes) -> None:
+            if not c in [value.stream_client for value in client_dict.values()]:
+                print(f"Client not in client_dict")
+                c.stop()
+                return
+
+            instance_id = [key for key, value in client_dict.items() if value.stream_client == c][0]
+            # try to parse json
+            try:
+                string_msg = message.decode("utf-8")
+                json_msg = json.loads(string_msg)
+                # check if json_msg has "task" key
+                if "task" in json_msg:
+                    task = json_msg["task"]
+                    if task == "transcribe":
+                        client_dict[instance_id].task = data.Task.TRANSCRIBE
+                    elif task == "translate":
+                        client_dict[instance_id].task = data.Task.TRANSLATE
+                    else:
+                        print(f"Unknown task: {task}")
+                else:
+                    print(f"No task found in message: {string_msg}")
+            except Exception as e:
+                print(f"Error parsing message: {e}")
                 
 
+        # Register message handlers
         c.on_udp_message(onmsg)
+        c.on_tcp_message(ontcpmsg)
     srv.on_connected(OnConnected)
 
     # Start server

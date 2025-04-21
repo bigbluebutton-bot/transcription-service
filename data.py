@@ -1,5 +1,6 @@
 # data.py
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, List, Optional, Tuple, Union, Dict
 
 import numpy as np
@@ -19,9 +20,15 @@ class TextSegment:
     words: Optional[List[Word]] = None
     probability: Optional[float] = None # This is the probability of the word detected at this point in the audio. Not how likley the word is to be correct.
 
+# enum
+class Task(Enum):
+    TRANSCRIBE = "transcribe"
+    TRANSLATE = "translate"
+
 @dataclass
 class AudioData:
     raw_audio_data: bytes                                    # Current audio chunk from stream
+    task: Task                                               # Task to perform on the audio data
     audio_buffer: Optional[bytes] = None                     # Buffer of n seconds of raw audio data
     audio_buffer_time: Optional[float] = None                # Time duration of the audio buffer
     audio_buffer_start_after: Optional[float] = None         # Time duration of the audio buffer start after the start of the audio stream

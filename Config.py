@@ -34,7 +34,8 @@ class Settings(TypedDict):
     FASTER_WHISPER_DEVICE: list[str]
     CONFIRM_WORDS_OFFSET: float
     CONFIRM_WORDS_MAX_WORDS: int
-    CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN: float
+    TRANSCRIBE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN: float
+    TRANSLATE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN: float
 
 def load_settings() -> Settings:
     # load_dotenv(override=True)
@@ -177,7 +178,8 @@ def load_settings() -> Settings:
         'FASTER_WHISPER_DEVICE': get_variable('TRANSCRIPTION_FASTER_WHISPER_DEVICE', ["all"], validate_list_string), # type: ignore
         'CONFIRM_WORDS_OFFSET': get_variable('TRANSCRIPTION_CONFIRM_WORDS_OFFSET', 0.3, validate_float), # type: ignore
         'CONFIRM_WORDS_MAX_WORDS': get_variable('TRANSCRIPTION_CONFIRM_WORDS_MAX_WORDS', 50, validate_int), # type: ignore
-        'CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN': get_variable('TRANSCRIPTION_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN', 1.0, validate_float), # type: ignore
+        'TRANSCRIBE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN': get_variable('TRANSCRIPTION_TRANSCRIBE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN', 1.0, validate_float), # type: ignore
+        'TRANSLATE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN': get_variable('TRANSCRIPTION_TRANSLATE_CONFIRM_WORDS_CONFIRM_IF_OLDER_THEN', 10.0, validate_float), # type: ignore
     }
 
     if not valid_config:
