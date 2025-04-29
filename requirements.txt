@@ -1,5 +1,5 @@
 mypy==1.11.2
-torch==2.4.1
+torch==2.7.0
 ffmpeg-python==0.2.0
 git+https://github.com/bigbluebutton-bot/stream_pipeline
 
@@ -136,7 +136,7 @@ tensorboardX==2.6.2.2
 threadpoolctl==3.5.0
 tokenizers==0.20.1
 tomli==2.0.2
-torch==2.4.1
+torch==2.7.0
 torch-audiomentations==0.11.1
 torch_pitch_shift==1.2.5
 torchaudio==2.4.1
