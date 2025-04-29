@@ -148,5 +148,5 @@ types-protobuf==5.28.0.20240924
 typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.2.3
-Werkzeug==3.0.4
+Werkzeug==3.0.6
 yarl==1.15.1
