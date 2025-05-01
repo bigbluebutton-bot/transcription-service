@@ -170,7 +170,7 @@ def load_settings() -> Settings:
         'VAD_MODEL_FP': get_variable('TRANSCRIPTION_VAD_MODEL_FP', ""), # type: ignore
         'VAD_SEGMENTATION_URL': get_variable('TRANSCRIPTION_VAD_SEGMENTATION_URL', "https://whisperx.s3.eu-west-2.amazonaws.com/model_weights/segmentation/0b5b3216d60a2d32fc086b47ea8c67589aaeb26b7e07fcbe620d6d0b83e209ea/pytorch_model.bin"), # type: ignore
         'FASTER_WHISPER_MODEL_PATH': get_variable('TRANSCRIPTION_FASTER_WHISPER_MODEL_PATH', ".models/faster-whisper", validate_path), # type: ignore
-        'FASTER_WHISPER_MODEL_SIZE': get_variable('TRANSCRIPTION_FASTER_WHISPER_MODEL_SIZE', "base", validate_model), # type: ignore
+        'FASTER_WHISPER_MODEL_SIZE': get_variable('TRANSCRIPTION_FASTER_WHISPER_MODEL_SIZE', "base"), # type: ignore
         'FASTER_WHISPER_TASK': get_variable('TRANSCRIPTION_FASTER_WHISPER_TASK', "transcribe", validate_task), # type: ignore
         'FASTER_WHISPER_COMPUTE_TYPE': get_variable('TRANSCRIPTION_FASTER_WHISPER_COMPUTE_TYPE', "float16"), # type: ignore
         'FASTER_WHISPER_BATCHING': get_variable('TRANSCRIPTION_FASTER_WHISPER_BATCHING', True, validate_bool), # type: ignore
