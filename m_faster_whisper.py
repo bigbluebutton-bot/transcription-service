@@ -99,7 +99,7 @@ class WhisperAIManager:
                 self._devices_mutex[i].release()
                 break
 
-    def _execute(self, audio: np.ndarray, task: str, clip_timestamps: Optional[List[Dict[str, float | List[Tuple[float, float]]]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
+    def _execute(self, audio: np.ndarray, task: str, clip_timestamps: Optional[List[Dict[str, int]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
         if not self._models:
             self.load_model()
 
@@ -138,10 +138,10 @@ class WhisperAIManager:
                 self._release_device(device)
             raise e
 
-    def transcribe(self, audio: np.ndarray, clip_timestamps: Optional[List[Dict[str, float | List[Tuple[float, float]]]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
+    def transcribe(self, audio: np.ndarray, clip_timestamps: Optional[List[Dict[str, int]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
         return self._execute(audio, "transcribe", clip_timestamps)
 
-    def translate(self, audio: np.ndarray, clip_timestamps: Optional[List[Dict[str, float | List[Tuple[float, float]]]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
+    def translate(self, audio: np.ndarray, clip_timestamps: Optional[List[Dict[str, int]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
         return self._execute(audio, "translate", clip_timestamps)
 
 
@@ -179,11 +179,12 @@ class Faster_Whisper_transcribe(Module):
 
         audio_buffer_start_after = dp.data.audio_buffer_start_after
         audio = dp.data.audio_data
-        clip_timestamps=dp.data.vad_result
+        clip_timestamps =dp.data.vad_result
         audio_data_sample_rate = dp.data.audio_data_sample_rate
 
 
         # modify clip_timestamps to match the new format of faster-whisper
+        new_clip_timestamps: Optional[List[Dict[str, int]]] = None
         if clip_timestamps is not None:
             # clip_timestamps = [
             #     {
@@ -191,15 +192,27 @@ class Faster_Whisper_transcribe(Module):
             #         'end': int(16.24784375 * audio_data_sample_rate),
             #     }
             # ]
-            for i in range(len(clip_timestamps)):
-                clip_timestamps[i]['start'] = int(clip_timestamps[i]['start'] * audio_data_sample_rate)
-                clip_timestamps[i]['end'] = int(clip_timestamps[i]['end'] * audio_data_sample_rate)
+            new_clip_timestamps = []
+            for ct in clip_timestamps:
+                start = ct["start"]
+                end = ct["end"]
+                # if start or end are not of type float skip this timestamp
+                if not isinstance(start, float) or not isinstance(end, float):
+                    log.warning(f"Skipping clip timestamp: {ct}")
+                    continue
+
+                new_clip_timestamps.append(
+                    {
+                        "start": int(start * audio_data_sample_rate),
+                        "end":   int(end   * audio_data_sample_rate)
+                    }
+                )
 
         
         if dp.data.task == data.Task.TRANSCRIBE:
-            segments, info = self._ai_manager.transcribe(audio, clip_timestamps)
+            segments, info = self._ai_manager.transcribe(audio, new_clip_timestamps)
         elif dp.data.task == data.Task.TRANSLATE:
-            segments, info = self._ai_manager.translate(audio, clip_timestamps)
+            segments, info = self._ai_manager.translate(audio, new_clip_timestamps)
 
         result = []
         for segment in segments:
