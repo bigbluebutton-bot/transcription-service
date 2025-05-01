@@ -37,6 +37,7 @@ WhisperAIManager(
     batch_size = settings["FASTER_WHISPER_BATCH_SIZE"],
     devices = settings["FASTER_WHISPER_DEVICE"] # "cuda" or "cpu"
 )
+WhisperAIManager().load_model()
 
 controllers = [
     PipelineController(
