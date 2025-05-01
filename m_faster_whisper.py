@@ -204,7 +204,7 @@ class Faster_Whisper_transcribe(Module):
         result = []
         for segment in segments:
             words = []
-            print(f"Segment: {segment}")
+            # print(f"Segment: {segment}")
             if segment.words:
                 for word in segment.words:
                     w = data.Word(
