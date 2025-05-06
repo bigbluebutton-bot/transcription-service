@@ -1,10 +1,10 @@
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04 AS build-env
 
-RUN apt update && \
-    apt install -y --no-install-recommends \
-      git python3 python3-pip python3.12-venv ffmpeg \
-      libcudnn9-dev-cuda-12 && \
-    ln -s /usr/bin/python3 /usr/bin/python
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      git python3 python3-pip python3.12-venv ffmpeg && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY requirements.txt ./
