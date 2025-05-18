@@ -84,9 +84,40 @@ class Create_Audio_Buffer(ExecutionModule):
 
             # Combine the audio buffer into a single audio package
             n_seconds_of_audio: bytes = self._header_buffer + b''.join([page.raw_data for page in self._audio_data_buffer])
-            dp.data.raw_audio_data = n_seconds_of_audio
+            dp.data.audio_buffer = n_seconds_of_audio
             dp.data.audio_buffer_time = self._current_audio_buffer_seconds
             dp.data.audio_buffer_start_after = self._start_of_buffer_time
+
+            # create a small buffer after the confirmed words
+            if dp.data.last_confimed_words is not None and len(dp.data.last_confimed_words) > 0:
+                # get the last confirmed word
+                last_confirmed_word = dp.data.last_confimed_words[-1]
+                last_confirmed_word_time_end = last_confirmed_word.end
+
+                # create a new audio buffer from last_confirmed_word_time_end to self._start_of_buffer_time
+                new_audio_buffer_time = (self._start_of_buffer_time + self._current_audio_buffer_seconds) - last_confirmed_word_time_end
+                
+                # if the last_confirmed_word is older then self.last_n_seconds: return
+                if last_confirmed_word_time_end < new_audio_buffer_time:
+                    return
+
+                new_audio_buffer: List[OggS_Page] = []
+                # calculate the amount of pages for the new audio buffer
+                new_audio_buffer_duration: float = 0.0
+                for page in reversed(self._audio_data_buffer): # interate in reverse order
+                    new_audio_buffer_duration += page_duration
+                    if new_audio_buffer_duration >= new_audio_buffer_time:
+                        break
+                    new_audio_buffer.append(page)
+
+                if new_audio_buffer_duration >= self.min_n_seconds:
+                    # now create a new buffer which starts after the last confirmed word
+                    dp.data.audio_buffer = self._header_buffer + b''.join([page.raw_data for page in new_audio_buffer])
+                    dp.data.audio_buffer_time = new_audio_buffer_duration
+                    dp.data.audio_buffer_start_after = last_confirmed_word_time_end
+
+                    # print(f"audio_unconfirmed_buffer_time: {dp.data.audio_unconfirmed_buffer_time}, audio_unconfirmed_buffer_start_after: {dp.data.audio_unconfirmed_buffer_start_after}")
+
         else:
             dpm.status = Status.EXIT
             dpm.message = "Not enough audio data to create a package"

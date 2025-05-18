@@ -78,9 +78,10 @@ class Convert_Audio(Module):
     ) -> None:
         if not dp.data:
             raise Exception("No data found")
-        if not dp.data.raw_audio_data:
+        if not dp.data.audio_buffer:
             raise Exception("No audio data found")
         
-        audio_data = self.load_audio_from_binary(dp.data.raw_audio_data)
+        
+        audio_data = self.load_audio_from_binary(dp.data.audio_buffer)
         dp.data.audio_data_sample_rate = self.convert_sample_rate
         dp.data.audio_data = audio_data

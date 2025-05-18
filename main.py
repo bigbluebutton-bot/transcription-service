@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import json
 import threading
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from prometheus_client import start_http_server
 from flask import Flask
@@ -145,6 +145,9 @@ class Client():
     instance_id: str
     task: data.Task
     stream_client: StreamClient
+    last_confirmed_words: Optional[List[data.Word]] = None
+
+    lock: threading.Lock = threading.Lock()
 
 
 def main() -> None:
@@ -196,6 +199,10 @@ def main() -> None:
                     pipeline.unregister_instance(instance_id)
                     return
                 
+                with client_dict[instance_id].lock:
+                    # set last confirmed words
+                    client_dict[instance_id].last_confirmed_words = dp.data.confirmed_words
+
                 # send text to client
                 client = client_dict[instance_id]
                 client.stream_client.send_message(str.encode(text))
@@ -271,11 +278,15 @@ def main() -> None:
 
                 instance_id = [key for key, value in client_dict.items() if value.stream_client == c][0]
                 task = client_dict[instance_id].task
+                last_confirmed_words: Optional[List[data.Word]] = None
+                with client_dict[instance_id].lock:
+                    last_confirmed_words = client_dict[instance_id].last_confirmed_words
 
             
                 audio_data = data.AudioData(
                                             raw_audio_data=recv_data,
-                                            task=task
+                                            task=task,
+                                            last_confimed_words=last_confirmed_words,
                                             )
                 pipeline.execute(
                                 audio_data,
@@ -307,6 +318,10 @@ def main() -> None:
                         client_dict[instance_id].task = data.Task.TRANSLATE
                     else:
                         print(f"Unknown task: {task}")
+                    
+                    # clear last confirmed words
+                    with client_dict[instance_id].lock:
+                        client_dict[instance_id].last_confirmed_words = None
                 else:
                     print(f"No task found in message: {string_msg}")
             except Exception as e:

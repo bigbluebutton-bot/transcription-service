@@ -99,7 +99,7 @@ class WhisperAIManager:
                 self._devices_mutex[i].release()
                 break
 
-    def _execute(self, audio: np.ndarray, task: str, clip_timestamps: Optional[List[Dict[str, int]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
+    def _execute(self, audio: np.ndarray, task: str, clip_timestamps: Optional[List[Dict[str, int]]] = None, confirmed_words: Optional[str] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
         if not self._models:
             self.load_model()
 
@@ -121,12 +121,15 @@ class WhisperAIManager:
                     word_timestamps=True,
                     vad_filter=True,  # Enable VAD
                     clip_timestamps=clip_timestamps,  # Pass VAD configuration
+                    initial_prompt=confirmed_words,  # Pass confirmed words
+                    language="de",
                 )
             else:
                 segments, info = self._models[device].transcribe(
                     audio,
                     task=task,
                     word_timestamps=True,
+                    initial_prompt=confirmed_words, # Pass confirmed words
                 )
 
             segments_list = [segment for segment in segments]
@@ -138,8 +141,8 @@ class WhisperAIManager:
                 self._release_device(device)
             raise e
 
-    def transcribe(self, audio: np.ndarray, clip_timestamps: Optional[List[Dict[str, int]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
-        return self._execute(audio, "transcribe", clip_timestamps)
+    def transcribe(self, audio: np.ndarray, clip_timestamps: Optional[List[Dict[str, int]]] = None, confirmed_words: Optional[str] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
+        return self._execute(audio, "transcribe", clip_timestamps, confirmed_words)
 
     def translate(self, audio: np.ndarray, clip_timestamps: Optional[List[Dict[str, int]]] = None) -> Tuple[List[WhisperModel.TranscriptionSegment], Dict]:
         return self._execute(audio, "translate", clip_timestamps)
@@ -177,6 +180,7 @@ class Faster_Whisper_transcribe(Module):
             raise Exception("No sampling rate found")
         
 
+        confirmed_words = " ".join([word.word for word in dp.data.confirmed_words]) if dp.data.confirmed_words else None
         audio_buffer_start_after = dp.data.audio_buffer_start_after
         audio = dp.data.audio_data
         clip_timestamps =dp.data.vad_result
@@ -210,7 +214,7 @@ class Faster_Whisper_transcribe(Module):
 
         
         if dp.data.task == data.Task.TRANSCRIBE:
-            segments, info = self._ai_manager.transcribe(audio, new_clip_timestamps)
+            segments, info = self._ai_manager.transcribe(audio, new_clip_timestamps, confirmed_words)
         elif dp.data.task == data.Task.TRANSLATE:
             segments, info = self._ai_manager.translate(audio, new_clip_timestamps)
 
