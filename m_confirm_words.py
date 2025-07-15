@@ -41,7 +41,7 @@ class Confirm_Words(Module):
         matcher = difflib.SequenceMatcher(None, wort1, wort2)
         return matcher.ratio()
 
-    def is_similar(self, word1: str, word2: str, max_diff_percantage: float = -1.0) -> bool:
+    def is_similar(self, word1: str, word2: str, max_diff_percentage: float = -1.0) -> bool:
         # Lowercase the words
         word1_l = word1.lower()
         word2_l = word2.lower()
@@ -57,12 +57,12 @@ class Confirm_Words(Module):
         word1_clean = remove_symbols(word1_l)
         word2_clean = remove_symbols(word2_l)
 
-        if max_diff_percantage == -1.0:
+        if max_diff_percentage == -1.0:
             return word1_clean == word2_clean
         
         diff = self.similarity_difflib(word1_clean, word2_clean)
 
-        return diff >= max_diff_percantage
+        return diff >= max_diff_percentage
 
         # # Calculate the number of different characters between word1 and word2
         # diff_chars = sum(1 for a, b in zip(word1_clean, word2_clean) if a != b) + abs(len(word1_clean) - len(word2_clean))
@@ -128,7 +128,7 @@ class Confirm_Words(Module):
         # for word in words_to_confirm:
         #     new_unconfirmed.remove(word)
 
-        # Find words which are in new_confirmed and not in confirmed. Use simular
+        # Find words which are in new_confirmed and not in confirmed. Use similar
         # time_tolerance = 0.5
         # for new_word in list(reversed(new_confirmed)):
         #     found = False

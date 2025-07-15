@@ -1411,10 +1411,10 @@ def main() -> None:
             with result_mutex:
                 result.clear()
             
-            new_file_beginning_sumulation = new_file_beginning + f"_{simulation_pipeline.name}"
+            new_file_beginning_simulation = new_file_beginning + f"_{simulation_pipeline.name}"
             
             start_time = end_time = time.time()
-            if not os.path.exists(f"{new_file_beginning_sumulation}_simulation.pkl"):
+            if not os.path.exists(f"{new_file_beginning_simulation}_simulation.pkl"):
                 # create pipeline
                 pipeline = simulation_pipeline.pipeline
                 pipeline_id = pipeline.get_id()
@@ -1439,7 +1439,7 @@ def main() -> None:
 
                 with result_mutex:
                     data_list = [(dat.data, dat.start_time, dat.end_time) for dat in result if dat.data is not None]
-                    with open(f"{new_file_beginning_sumulation}_simulation.pkl", 'wb') as file:
+                    with open(f"{new_file_beginning_simulation}_simulation.pkl", 'wb') as file:
                         pickle.dump(data_list, file)
                         
                         
@@ -1448,7 +1448,7 @@ def main() -> None:
                 end = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
                 urls = simulation_pipeline.prometheus_url
                 for i, url in enumerate(urls):
-                    if os.path.exists(f"{new_file_beginning_sumulation}_{i}_graph.png"):
+                    if os.path.exists(f"{new_file_beginning_simulation}_{i}_graph.png"):
                         continue
                     
                     url_copy = url.copy()
@@ -1464,7 +1464,7 @@ def main() -> None:
                         # Check if the request was successful
                         if response.status_code == 200:
                             # Save the content as an image file
-                            with open(f"{new_file_beginning_sumulation}_{i}_graph.png", 'wb') as file:
+                            with open(f"{new_file_beginning_simulation}_{i}_graph.png", 'wb') as file:
                                 file.write(response.content)
                         else:
                             print(f"Failed to download image. Status code: {response.status_code}")
@@ -1483,7 +1483,7 @@ def main() -> None:
                                 response_data = statsresponse.json()
                                 
                                 # Save the content as a JSON file
-                                with open(f"{new_file_beginning_sumulation}_{i}_stats.json", 'w') as statsfile:
+                                with open(f"{new_file_beginning_simulation}_{i}_stats.json", 'w') as statsfile:
                                     import json
                                     json.dump(response_data, statsfile, indent=4)
                             except ValueError:
@@ -1500,7 +1500,7 @@ def main() -> None:
 
 
             # Load the pkl file
-            with open(f"{new_file_beginning_sumulation}_simulation.pkl", 'rb') as read_file:
+            with open(f"{new_file_beginning_simulation}_simulation.pkl", 'rb') as read_file:
                 live_data: list[tuple[data.AudioData, float, float]] = pickle.load(read_file) # type: ignore
                 
             with open(f"{new_file_beginning}_transcript.pkl", 'rb') as read_file:
@@ -1521,9 +1521,9 @@ def main() -> None:
             #         live_dp.data.unconfirmed_words = None
             #     cw.execute(live_dp, DataPackageController(), DataPackagePhase(), DataPackageModule())
 
-            stat_sensetive, stat_insensetive, avg_time_difference, std_dev, mad = stats(live_dps, transcript_words)
+            stat_sensitive, stat_insensitive, avg_time_difference, std_dev, mad = stats(live_dps, transcript_words)
             
-            def save_stats(stats_sensetive, stats_insensetive, stat_avg_time_difference, stat_std_dev, stat_mad) -> None:
+            def save_stats(stats_sensitive, stats_insensitive, stat_avg_time_difference, stat_std_dev, stat_mad) -> None:
                 # Function to format statistics as JSON
                 def stats_to_json(stat: Statistics) -> str:
                     return json.dumps({
@@ -1536,11 +1536,11 @@ def main() -> None:
                     }, indent=4)
 
                 # if file f"{new_file_beginning}_stats.txt" exists, delete it
-                if os.path.exists(f"{new_file_beginning_sumulation}_stats.txt"):
-                    os.remove(f"{new_file_beginning_sumulation}_stats.txt")
+                if os.path.exists(f"{new_file_beginning_simulation}_stats.txt"):
+                    os.remove(f"{new_file_beginning_simulation}_stats.txt")
 
                 # Writing the output to a file
-                with open(f"{new_file_beginning_sumulation}_stats.txt", "w") as file:
+                with open(f"{new_file_beginning_simulation}_stats.txt", "w") as file:
                     file.write(f"-------------------------------------------------------------------\n")
                     file.write(f"File: {file_path}\n")
                     file.write(f"-------------------------------------------------------------------\n")
@@ -1549,29 +1549,29 @@ def main() -> None:
                     file.write(f"Mean absolute deviation of time difference: {stat_mad * 1000:.1f} milliseconds\n")
                     file.write(f"-------------------------------------------------------------------\n")
                     file.write(f"Statistics for case sensitive:\n")
-                    file.write(f"Number of words missing in live (Deletions): {len(stats_sensetive.deletions)}\n")
-                    file.write(f"Number of wrong words in live (Substitutions): {len(stats_sensetive.substitutions)}\n")
-                    file.write(f"Number of extra words in live (Insertions): {len(stats_sensetive.insertions)}\n")
-                    file.write(f"Average difference in start times: {stats_sensetive.avg_delta_start * 1000:.1f} milliseconds\n")
-                    file.write(f"Average difference in end times: {stats_sensetive.avg_delta_end * 1000:.1f} milliseconds\n")
-                    file.write(f"Word Error Rate (WER): {stats_sensetive.wer * 100:.1f}%\n")
+                    file.write(f"Number of words missing in live (Deletions): {len(stats_sensitive.deletions)}\n")
+                    file.write(f"Number of wrong words in live (Substitutions): {len(stats_sensitive.substitutions)}\n")
+                    file.write(f"Number of extra words in live (Insertions): {len(stats_sensitive.insertions)}\n")
+                    file.write(f"Average difference in start times: {stats_sensitive.avg_delta_start * 1000:.1f} milliseconds\n")
+                    file.write(f"Average difference in end times: {stats_sensitive.avg_delta_end * 1000:.1f} milliseconds\n")
+                    file.write(f"Word Error Rate (WER): {stats_sensitive.wer * 100:.1f}%\n")
                     file.write(f"-------------------------------------------------------------------\n")
                     file.write(f"Statistics without case sensitivity and symbols:\n")
-                    file.write(f"Number of words missing in live (Deletions): {len(stats_insensetive.deletions)}\n")
-                    file.write(f"Number of wrong words in live (Substitutions): {len(stats_insensetive.substitutions)}\n")
-                    file.write(f"Number of extra words in live (Insertions): {len(stats_insensetive.insertions)}\n")
-                    file.write(f"Average difference in start times: {stats_insensetive.avg_delta_start * 1000:.1f} milliseconds\n")
-                    file.write(f"Average difference in end times: {stats_insensetive.avg_delta_end * 1000:.1f} milliseconds\n")
-                    file.write(f"Word Error Rate (WER): {stats_insensetive.wer * 100:.1f}%\n")
+                    file.write(f"Number of words missing in live (Deletions): {len(stats_insensitive.deletions)}\n")
+                    file.write(f"Number of wrong words in live (Substitutions): {len(stats_insensitive.substitutions)}\n")
+                    file.write(f"Number of extra words in live (Insertions): {len(stats_insensitive.insertions)}\n")
+                    file.write(f"Average difference in start times: {stats_insensitive.avg_delta_start * 1000:.1f} milliseconds\n")
+                    file.write(f"Average difference in end times: {stats_insensitive.avg_delta_end * 1000:.1f} milliseconds\n")
+                    file.write(f"Word Error Rate (WER): {stats_insensitive.wer * 100:.1f}%\n")
                     file.write(f"-------------------------------------------------------------------\n")
                     file.write(f"-------------------------------------------------------------------\n")
                     file.write(f"Statistics as formatted JSON for sensitive case:\n")
-                    file.write(stats_to_json(stats_sensetive) + "\n")
+                    file.write(stats_to_json(stats_sensitive) + "\n")
                     file.write(f"Statistics as formatted JSON for insensitive case:\n")
-                    file.write(stats_to_json(stats_insensetive) + "\n")
+                    file.write(stats_to_json(stats_insensitive) + "\n")
                 
             print(f"File: {folder_name}")
-            save_stats(stat_sensetive, stat_insensetive, avg_time_difference, std_dev, mad)
+            save_stats(stat_sensitive, stat_insensitive, avg_time_difference, std_dev, mad)
             
             try:
                 subprocess.run(['chmod', '777', output_folder, '-R'])

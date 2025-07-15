@@ -128,14 +128,14 @@ def load_settings() -> Settings:
                 return False
             
     def validate_list_string(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
-        # value can be a list or a string seperated by a comma which has to convert to a list
+        # value can be a list or a string separated by a comma which has to convert to a list
         nonlocal valid_config
         if type(value) == list:
             return value
         elif type(value) == str:
             return value.split(",")
         else:
-            logging.error(f"Invalid list value for setting: {env_var}. Expected a list of strings or a comma seperated string. Using default value: {default}")
+            logging.error(f"Invalid list value for setting: {env_var}. Expected a list of strings or a comma separated string. Using default value: {default}")
             valid_config = False
             return default
 

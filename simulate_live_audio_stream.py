@@ -166,7 +166,7 @@ def compute_statistics(
 
 
 
-def _is_similar(word1: str, word2: str, max_diff_percantage: float = -1.0) -> bool:
+def _is_similar(word1: str, word2: str, max_diff_percentage: float = -1.0) -> bool:
     def similarity_difflib(wort1: str, wort2: str) -> float:
         matcher = difflib.SequenceMatcher(None, wort1, wort2)
         return matcher.ratio()
@@ -186,12 +186,12 @@ def _is_similar(word1: str, word2: str, max_diff_percantage: float = -1.0) -> bo
     word1_clean = remove_symbols(word1_l)
     word2_clean = remove_symbols(word2_l)
 
-    if max_diff_percantage == -1.0:
+    if max_diff_percentage == -1.0:
         return word1_clean == word2_clean
     
     diff = similarity_difflib(word1_clean, word2_clean)
 
-    return diff >= max_diff_percantage
+    return diff >= max_diff_percentage
 
 # Define helper function to calculate the mean absolute deviation (MAD)
 def _mean_absolute_deviation(data: List[float]) -> float:
