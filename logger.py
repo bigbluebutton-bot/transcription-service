@@ -14,17 +14,17 @@ def get_logger() -> logging.Logger:
 
 def setup_logging() -> logging.Logger:
     logger = logging.getLogger("live_translation")
-    
+
     log_directory: str = "logs"
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
-    
+
     config_file: pathlib.Path = pathlib.Path("logging_config.json")
     with open(config_file) as f_in:
         logging_config: Dict[str, Any] = json.load(f_in)
 
     logging.config.dictConfig(logging_config)
-        
+
     pipeline_logger: PipelineLogger = PipelineLogger()
     pipeline_logger.set_debug(True)
     pipeline_logger.set_info(logger.info)
@@ -35,7 +35,7 @@ def setup_logging() -> logging.Logger:
     pipeline_logger.set_exception(logger.exception)
     pipeline_logger.set_excepthook(logger.error)
     pipeline_logger.set_threading_excepthook(logger.error)
-    
+
     return logger
 
 
@@ -132,12 +132,12 @@ class MyJSONFormatter(logging.Formatter):
         # Truncate and serialize the final log record
         truncated: Dict[str, Any] = truncate_dict(log_record, self.max_length)
         return json.dumps(truncated)
-        
+
 class SimpleJSONFormatter(logging.Formatter):
     def __init__(self, max_length: int = 64, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.max_length: int = max_length
-    
+
     def format(self, record: logging.LogRecord) -> str:
         # Initialize the log record with the message
         log_record: Dict[str, Any] = {"message": record.msg}
@@ -147,7 +147,7 @@ class SimpleJSONFormatter(logging.Formatter):
             key: value for key, value in record.__dict__.items() 
             if key not in LOG_RECORD_BUILTIN_ATTRS and not key.startswith('_')
         }
-        
+
         for key, value in extra.items():
             if hasattr(value, 'to_dict'):
                 extra[key] = value.to_dict()
@@ -157,10 +157,10 @@ class SimpleJSONFormatter(logging.Formatter):
                     extra[key] = json.loads(value)
                 except (TypeError, ValueError):
                     pass
-            
+
         if extra:
             log_record["extra"] = extra
-            
+
         log_record = truncate_dict(log_record, self.max_length)
 
         # Convert to JSON

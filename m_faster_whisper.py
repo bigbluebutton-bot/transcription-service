@@ -175,7 +175,7 @@ class Faster_Whisper_transcribe(Module):
             raise Exception("No audio buffer start after found")
         if dp.data.audio_data_sample_rate is None:
             raise Exception("No sampling rate found")
-        
+
 
         audio_buffer_start_after = dp.data.audio_buffer_start_after
         audio = dp.data.audio_data
@@ -208,7 +208,7 @@ class Faster_Whisper_transcribe(Module):
                     }
                 )
 
-        
+
         if dp.data.task == data.Task.TRANSCRIBE:
             segments, info = self._ai_manager.transcribe(audio, new_clip_timestamps)
         elif dp.data.task == data.Task.TRANSLATE:
