@@ -3,8 +3,7 @@ import socket
 import threading
 import logging
 import inspect
-import time
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple
 import Event as event
 EventHandler = event.EventHandler
 

@@ -1,6 +1,5 @@
 # m_faster_whisper.py
 from __future__ import annotations
-import copy
 import threading
 from typing import Dict, List, Optional, Tuple, Type, TypeVar, Any
 

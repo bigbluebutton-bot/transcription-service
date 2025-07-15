@@ -1,6 +1,6 @@
 import logging
 import threading
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict
 
 
 class EventHandler:

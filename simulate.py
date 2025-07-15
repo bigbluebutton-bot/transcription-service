@@ -4,12 +4,11 @@ from datetime import datetime
 import json
 import os
 import pickle
-import shutil
 import subprocess
 import threading
 import time
-from typing import Dict, List, Tuple
-from urllib.parse import quote, urlencode, urlunparse
+from typing import Dict, List
+from urllib.parse import urlencode, urlunparse
 from prometheus_client import start_http_server
 import copy
 

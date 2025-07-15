@@ -5,12 +5,11 @@ import time
 import unicodedata
 import torch
 from difflib import SequenceMatcher
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple
 
 from faster_whisper import WhisperModel, BatchedInferencePipeline # type: ignore
-import torch
 
-from ogg import Ogg_OPUS_Audio, OggS_Page, calculate_page_duration
+from ogg import Ogg_OPUS_Audio, calculate_page_duration
 import data
 from stream_pipeline.data_package import DataPackage
 

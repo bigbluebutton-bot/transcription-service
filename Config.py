@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 from dotenv import load_dotenv
-from typing import Callable, Dict, Optional, TypedDict, Union
+from typing import Callable, Optional, TypedDict, Union
 
 class Settings(TypedDict):
     HOST: str

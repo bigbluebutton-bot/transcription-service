@@ -1,9 +1,8 @@
 import inspect
 import logging
-import threading
 import time
 import json
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Tuple
 import TCPserver as TCPserver
 import UDPserver as UDPserver
 import Event as event

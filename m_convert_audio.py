@@ -2,8 +2,8 @@
 import subprocess
 import numpy as np
 
-from stream_pipeline.data_package import DataPackage, DataPackageController, DataPackagePhase, DataPackageModule, Status
-from stream_pipeline.module_classes import Module, ExecutionModule, ModuleOptions
+from stream_pipeline.data_package import DataPackage, DataPackageController, DataPackagePhase, DataPackageModule
+from stream_pipeline.module_classes import Module, ModuleOptions
 
 import data
 import logger
