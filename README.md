@@ -1,169 +1,52 @@
-# BBB transcription bot
+# --- Corrected Startup Script ---
 
-![Project Logo](img/transcription-pipeline.png)
+# First, ensure the variables from your .env file are loaded into your shell
+# You can do this by running `export $(grep -v '^#' .env | xargs)` or similar
+# before executing the rest of this script.
 
-## Overview
+# Make the directory for the keyfile
+echo "Creating mongo keyfile directory..."
+mkdir -p ./data/mongo
 
-This project aims to provide live transcription services for BigBlueButton (BBB) meetings, enabling real-time subtitles for participants. The transcription pipeline processes the audio stream from BBB meetings, converts speech to text using advanced speech recognition models, and delivers accurate subtitles to enhance accessibility and engagement. It uses the [stream_pipeline](https://github.com/bigbluebutton-bot/stream_pipeline)-framework to process the audio stream. This project is part of a larger project ([BBB Translation Bot repository](https://github.com/bigbluebutton-bot/bbb-translation-bot)).
+# Generate the keyfile
+echo "Generating keyfile..."
+openssl rand -base64 756 > ./data/mongo/keyfile
 
-## Features
+# Set read-only permissions for the owner
+chmod 400 ./data/mongo/keyfile
 
-- **Live Transcription:** Converts live speech in BBB to text using advanced speech recognition models.
-- **Simulation Mode:** Allows testing the transcription pipeline with pre-recorded audio files.
-- **Modular Architecture:** Each module handles a specific task within the pipeline, ensuring scalability and maintainability.
+# Change the owner to the mongodb user's ID (999)
+# This is a key step that requires sudo
+echo "Setting keyfile ownership..."
+sudo chown 999:999 ./data/mongo/keyfile
 
-## Getting Started
+# STEP 1: Bring up ONLY the database services first
+echo "Starting MongoDB and Redis nodes..."
+docker compose up -d
 
-Follow these simple steps to quickly set up the BBB-Translation-Bot.
+# Wait for the containers to initialize
+echo "Waiting for services to initialize (20s)..."
+sleep 20
 
-### Hardware
-This setup was testet with a Nvidia RTX 4090 GPU. The GPU is used for the transcription and translation of the audio stream.
+# STEP 2: Initiate the MongoDB replica set
+echo "Initiating MongoDB replica set..."
+docker compose exec mongo1 mongosh -u "admin" -p "admin" --authenticationDatabase admin --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongo1:27017"}, {_id: 1, host: "mongo2:27017"}, {_id: 2, host: "mongo3:27017"}]})'
 
-### Install Nvidia drivers for Ubuntu:
-Refer to the official [Nvidia documentation](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#ubuntu-lts):
-```bash
-sudo apt update
-sudo apt install linux-headers-$(uname -r)
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
-wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-keyring_1.0-1_all.deb
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
-sudo apt update
-sudo apt -y install cuda-drivers
-sudo reboot now
-```
+# STEP 3: Create the Redis cluster
+echo "Creating Redis cluster..."
+docker compose exec redis-1 redis-cli --cluster create redis-1:6379 redis-2:6379 redis-3:6379 redis-4:6379 redis-5:6379 redis-6:6379 --cluster-replicas 1 --cluster-yes
 
-### Docker with GPU support
-Ensure Docker with GPU support is installed on your system:
-Refer to the official [Nvidia documentation](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+# Done
+echo "---"
+echo "Setup complete! Services are running."
+echo "Mongo Express: http://localhost:8081"
+echo "Redis Commander: http://localhost:8082"
 
-```bash
-sudo apt update
+# STEP 5: Setup venv
+uv venv
+source .venv/bin/activate
+uv pip install .
 
-curl -sSL https://get.docker.com | sh
+# STEP 6: Run the application
+python main.py
 
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list \
-  && \
-    sudo apt-get update
-
-sudo apt install nvidia-container-runtime
-
-which nvidia-container-runtime-hook
-
-sudo systemctl restart docker
-
-docker run -it --rm --gpus all ubuntu nvidia-smi # Test GPU support
-```
-
-### Setup
-
-1. **Clone the Repository:**
-
-   ```bash
-   git clone https://github.com/JulianKropp/bbb-transcription-bot.git
-   cd bbb-transcription-bot
-   ```
-
-2. **Configure Environment Variables:**
-    If you only want to run the simulation, you can skip this step. And go to [Simulation](#simulation)
-
-   - Duplicate the `.env_example` file and rename it to `.env`.
-
-     ```bash
-     cp .env_example .env
-     ```
-
-   - Open the `.env` file and configure the necessary environment variables as per your setup.
-
-3. **Start the Application:**
-
-   ```bash
-   docker compose up
-   ```
-
-   This command will build and start all necessary services defined in the `docker-compose.yml` file.
-
-## Usage
-
-Once the application is running, it will crreate a meeting and process the audio stream from this BBB meeting and provide live subtitles. This version was only tested with BBB 2.5.
-
-## Simulation
-
-A simulation mode is available to test the transcription pipeline without needing a live BBB session.
-
-### Steps to Use Simulation:
-
-1. **Add an Audio File:**
-
-   - Place your audio file (any format) into the `audio` folder of the project.
-
-2. **Run the Simulation:**
-
-   ```bash
-   docker compose -f docker-compose-simulation.yml up
-   ```
-
-   This command will start a simulation that plays the audio file as if it were live. The simulation results will be stored in the `simulate_results` folder.
-
-3. **Review Results:**
-
-   - The `simulate_results` folder contains graphs and output files that display the Word Error Rate (WER) and latency metrics, indicating how long it takes for spoken words to be transcribed.
-
-**Note:** Multiple simulations may run one after the other, which can extend the total processing time.
-
-## Modules
-
-The transcription pipeline is built using a modular architecture, where each module handles a specific task to efficiently process the audio stream from BBB and generate accurate live transcripts. This design ensures scalability, maintainability, and ease of testing.
-
-### Key Modules
-
-1. **Audio Buffer Module**
-   
-   - **Purpose:** Creates a n-second audio buffer from the live audio stream to ensure optimal performance with Whisper.
-   - **Functionality:** Implements an OGG reader to parse audio data into manageable chunks, maintaining a continuous buffer without introducing significant delays. This module is stateful and operates in a non-parallel mode to preserve buffer integrity.
-
-2. **Flow Limiter Module**
-   
-   - **Purpose:** Controls the rate at which audio data packets enter the pipeline to manage processing load.
-   - **Functionality:** Limits the number of data packets processed per second, preventing overload and ensuring consistent subtitle delivery. Operates in a non-parallel mode to maintain controlled data flow.
-
-3. **Convert Audio Module**
-   
-   - **Purpose:** Standardizes incoming audio data into a uniform format suitable for processing.
-   - **Functionality:** Utilizes `ffmpeg` to convert various audio formats to 16-bit linear PCM (mono, 16 kHz), then transforms the binary data into normalized NumPy arrays. This stateless module supports parallel processing with controlled data sequencing.
-
-4. **VAD (Voice Activity Detection) Module**
-   
-   - **Purpose:** Identifies and isolates segments of the audio stream that contain speech.
-   - **Functionality:** Detects speech activity to filter out silent passages, forwarding only relevant audio segments to the transcription model. Uses the same VAD model as WhisperX for enhanced accuracy and operates in a stateless, parallel mode.
-
-5. **Whisper Module**
-   
-   - **Purpose:** Transcribes the buffered audio into text.
-   - **Functionality:** Employs Faster Whisper to convert audio data into text, leveraging batching and word-level timestamps for improved efficiency and accuracy. Processes the 30-second audio buffer and integrates seamlessly with the VAD module's timestamps. This stateless module is designed for single-worker operation to optimize GPU usage.
-
-6. **Confirm Words Module**
-   
-   - **Purpose:** Ensures the stability and accuracy of transcribed words over time.
-   - **Functionality:** Confirms words after they have been stable for a configurable period (e.g., 2 seconds), preventing further modifications and maintaining transcript integrity. Handles exceptions for low-probability words and overlapping timestamps, ensuring consistent and reliable transcription results. This stateful module operates in a non-parallel mode to manage confirmed word states effectively.
-
-Each module plays a critical role in the live transcription process, working together to deliver real-time, accurate subtitles in BBB meetings. The modular approach allows for easy updates and maintenance, leveraging the strengths of each component to build a robust transcription pipeline.
-
-## Acknowledgements
-
-Special thanks to the developers of the following projects, which were instrumental in building this pipeline:
-
-- [Faster Whisper](https://github.com/SYSTRAN/faster-whisper)
-- [WhisperX](https://github.com/m-bain/whisperX)
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-This Project is part of a larger project ([BBB Translation Bot repository](https://github.com/bigbluebutton-bot/bbb-translation-bot)). For ongoing development, please visit the [BBB Translation Bot repository](https://github.com/bigbluebutton-bot/bbb-translation-bot).
-
-It was forked from [bbb-transcription-bot](https://github.com/JulianKropp/bbb-transcription-bot)

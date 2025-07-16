@@ -1,27 +1,153 @@
-services:
-  transcription-server:
-    container_name: transcription-server
-    build:
-      context: .
-      dockerfile: Dockerfile
-    networks:
-      - transcription
-    # ports:
-    #   - 8042:8042
-    env_file:
-      - .env
-    volumes:
-      - ./.models:/app/.models
-      - ./logs:/app/logs
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: -1
-              capabilities: ["gpu"]
-    restart: "no"
+# docker-compose.yml (FINAL VERSION)
 
+services:
+  # --- MongoDB Services ---
+
+  mongo1:
+    image: mongo:8.0
+    container_name: mongo1_dev
+    restart: always
+    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - ./data/mongo1:/data/db
+      # Mount the keyfile
+      - ./data/mongo/keyfile:/etc/mongo/keyfile
+    networks:
+      - dev-net
+    ports:
+      - "27017:27017"
+
+  mongo2:
+    image: mongo:8.0
+    container_name: mongo2_dev
+    restart: unless-stopped
+    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile
+    volumes:
+      - ./data/mongo2:/data/db
+      - ./data/mongo/keyfile:/etc/mongo/keyfile
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    networks:
+      - dev-net
+
+  mongo3:
+    image: mongo:8.0
+    container_name: mongo3_dev
+    restart: unless-stopped
+    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile
+    volumes:
+      - ./data/mongo3:/data/db
+      - ./data/mongo/keyfile:/etc/mongo/keyfile
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    networks:
+      - dev-net
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo_express_dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      # Updated URL with credentials from the .env file
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&authSource=admin
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD}
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    networks:
+      - dev-net
+
+  # --- Redis Services ---
+  redis-1:
+    image: redis:7.2-alpine
+    container_name: redis_1_dev
+    restart: unless-stopped
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - ./data/redis-1:/data
+    networks:
+      - dev-net
+
+  redis-2:
+    image: redis:7.2-alpine
+    container_name: redis_2_dev
+    restart: unless-stopped
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - ./data/redis-2:/data
+    networks:
+      - dev-net
+
+  redis-3:
+    image: redis:7.2-alpine
+    container_name: redis_3_dev
+    restart: unless-stopped
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - ./data/redis-3:/data
+    networks:
+      - dev-net
+
+  redis-4:
+    image: redis:7.2-alpine
+    container_name: redis_4_dev
+    restart: unless-stopped
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - ./data/redis-4:/data
+    networks:
+      - dev-net
+
+  redis-5:
+    image: redis:7.2-alpine
+    container_name: redis_5_dev
+    restart: unless-stopped
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - ./data/redis-5:/data
+    networks:
+      - dev-net
+
+  redis-6:
+    image: redis:7.2-alpine
+    container_name: redis_6_dev
+    restart: unless-stopped
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    ports: # Expose one port for clients and the UI
+      - "6379:6379"
+    volumes:
+      - ./data/redis-6:/data
+    networks:
+      - dev-net
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander_dev
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    environment:
+      - REDIS_HOSTS=cluster:redis-1:6379
+    depends_on:
+      - redis-1
+      - redis-2
+      - redis-3
+      - redis-4
+      - redis-5
+      - redis-6
+    networks:
+      - dev-net
+
+# --- Network Definition ---
 networks:
-  transcription:
+  dev-net:
     driver: bridge
