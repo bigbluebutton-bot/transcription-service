@@ -156,7 +156,7 @@ class Binarize:
 
     Modified by Max Bain to include WhisperX's min-cut operation 
     https://arxiv.org/abs/2303.00747
-    
+
     Pyannote-audio
     """
 
@@ -294,7 +294,7 @@ def merge_chunks(
 
     if len(segments_list) == 0:
         return []
-    
+
     curr_start = segments_list[0].start
 
     for seg in segments_list:
@@ -310,14 +310,14 @@ def merge_chunks(
         curr_end = seg.end
         seg_idxs.append((seg.start, seg.end))
         speaker_idxs.append(seg.speaker)
-    
+
     # Add the final segment
     merged_segments.append({ 
         "start": curr_start,
         "end": curr_end,
         "segments": seg_idxs,
     })
-    
+
     return merged_segments
 
 
@@ -349,7 +349,7 @@ class VAD(Module):
         self.use_auth_token=use_auth_token
         self.model_fp=model_fp
         self.vad_segmentation_url = vad_segmentation_url
-        
+
         self._model: Optional[VoiceActivitySegmentation] = None
 
     def init_module(self) -> None:
@@ -368,34 +368,33 @@ class VAD(Module):
             raise Exception("No audio buffer time found")
         if dp.data.audio_data_sample_rate is None:
             raise Exception("No sample rate found")
-        
+
         # sample_rate: int = dp.data.audio_data_sample_rate
         audio_time: float = dp.data.audio_buffer_time
         audio_chunk: float = dp.data.audio_buffer_time if dp.data.audio_buffer_time < self.max_chunk_size else self.max_chunk_size
         audio: np.ndarray = dp.data.audio_data
-        
+
         # Perform voice activity detection
         vad_result: SlidingWindowFeature = self._model.apply(audio, sr=dp.data.audio_data_sample_rate)
-        
+
         # Merge VAD segments if necessary
         merged_segments: List[Dict[str, float | List[Tuple[float, float]]]] = merge_chunks(vad_result, chunk_size=audio_chunk)
-        
+
         dp.data.vad_result = merged_segments
-        
+
         last_time_spoken: float = 0.0
         if len(merged_segments) > 0:
             # detect if someone has spoken in the last 5 seconds
             last_segment = merged_segments[-1]
             if type(last_segment['end']) == float:
                 last_time_spoken = last_segment['end']
-        
+
         if len(merged_segments) == 0 or last_time_spoken < (audio_time - self.last_time_spoken_offset):
             dpm.message = "No voice detected"
             dpm.status = Status.EXIT
             print("No active speech found in audio")
             return
-        
-    
+
 
     def load_vad_model(self, device: str, vad_onset: float=0.500, vad_offset: float=0.363, use_auth_token: Union[Text, None]=None, model_fp: Union[Text, None]=None) -> VoiceActivitySegmentation:
         model_dir = self.model_path if self.model_path is not None else torch.hub._get_torch_home()

@@ -32,7 +32,7 @@ class Confirm_Words(Module):
 
         self._confirmed: List[data.Word] = []  # Buffer to store committed words
         self._confirmed_end_time: float = 0.0
-        
+
 
     def init_module(self) -> None:
         pass
@@ -45,7 +45,7 @@ class Confirm_Words(Module):
         # Lowercase the words
         word1_l = word1.lower()
         word2_l = word2.lower()
-        
+
         # Remove symbols and punctuation characters
         def remove_symbols(word: str) -> str:
             # Filter out characters classified as punctuation or symbols
@@ -53,20 +53,20 @@ class Confirm_Words(Module):
                 char for char in word 
                 if not unicodedata.category(char).startswith(('P', 'S'))
             )
-        
+
         word1_clean = remove_symbols(word1_l)
         word2_clean = remove_symbols(word2_l)
 
         if max_diff_percantage == -1.0:
             return word1_clean == word2_clean
-        
+
         diff = self.similarity_difflib(word1_clean, word2_clean)
 
         return diff >= max_diff_percantage
 
         # # Calculate the number of different characters between word1 and word2
         # diff_chars = sum(1 for a, b in zip(word1_clean, word2_clean) if a != b) + abs(len(word1_clean) - len(word2_clean))
-        
+
         # # Return True if the number of different characters is within the allowed maximum
         # return diff_chars <= max_diff_chars
 
@@ -83,10 +83,10 @@ class Confirm_Words(Module):
             raise Exception("No audio buffer start time found")
         if dp.data.audio_buffer_time is None:
             raise Exception("No audio buffer time found")
-        
+
         audio_buffer_start_after = dp.data.audio_buffer_start_after
         audio_buffer_time = dp.data.audio_buffer_time
-        
+
         # Collect new words from the transcribed segments
         new_words: List[data.Word] = []
         for segment in dp.data.transcribed_segments:
@@ -96,7 +96,7 @@ class Confirm_Words(Module):
 
         # only_words = [word.word for word in new_words]
         # print(only_words)
-            
+
         if len(new_words) == 0:
             dp.data.confirmed_words = self._confirmed.copy()
             dp.data.unconfirmed_words = []
@@ -176,10 +176,10 @@ class Confirm_Words(Module):
 
         if len(self._confirmed) > 0:
             self._confirmed_end_time = self._confirmed[-1].end
-            
+
         if len(self._confirmed) > self.max_confirmed_words:
             self._confirmed = self._confirmed[-self.max_confirmed_words:]
-        
+
         # Update data package confirmed and unconfirmed words
         # only_words = [word.word for word in self.confirmed]
         # print(only_words)

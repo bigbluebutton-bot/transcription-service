@@ -37,7 +37,7 @@ class Create_Audio_Buffer(ExecutionModule):
             raise Exception("No data found")
         if not dp.data.raw_audio_data:
             raise Exception("No audio data found")
-            
+
         page = OggS_Page(dp.data.raw_audio_data)
 
         if not self._header_pages:
@@ -57,7 +57,6 @@ class Create_Audio_Buffer(ExecutionModule):
                 dpm.status = Status.EXIT
                 return
 
-        
 
         last_page: Optional[OggS_Page] = self._audio_data_buffer[-1] if len(self._audio_data_buffer) > 0 else None
 

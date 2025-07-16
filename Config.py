@@ -113,7 +113,7 @@ def load_settings() -> Settings:
             logging.error(f"Invalid boolean value for setting: {env_var}. Expected 'true' or 'false'. Using default value: {default}")
             valid_config = False
             return default
-        
+
         if type(value) == str:
             if value.lower() in ["true", "false"]:
                 return value.lower() == "true"
@@ -126,7 +126,7 @@ def load_settings() -> Settings:
                 return True
             else:
                 return False
-            
+
     def validate_list_string(value: Union[str, int, float, bool, None, list[str]], default: Union[str, int, float, bool, None, list[str]], env_var: str) -> Union[str, int, float, bool, None, list[str]]:
         # value can be a list or a string seperated by a comma which has to convert to a list
         nonlocal valid_config

@@ -36,12 +36,11 @@ def simulate_live_audio_stream(file_path: str, callback: Callable[[bytes], None]
 
         # Sleep to simulate real-time audio playback
         time.sleep(page_duration)
-    
+
     end = time.time()
-    
+
     return (start, end)
-        
-        
+
 
 def transcribe_audio(audio_path: str, model_path: Optional[str]) -> List[data.Word]:
     # Configuration for the Whisper model
@@ -88,7 +87,7 @@ def compute_statistics(
     live: List[data.Word], 
     transcript: List[data.Word]
 ) -> Statistics:
-    
+
     if len(live) == 0:
         raise ValueError("The 'live' list is empty")
     if len(transcript) == 0:
@@ -170,11 +169,11 @@ def _is_similar(word1: str, word2: str, max_diff_percantage: float = -1.0) -> bo
     def similarity_difflib(wort1: str, wort2: str) -> float:
         matcher = difflib.SequenceMatcher(None, wort1, wort2)
         return matcher.ratio()
-    
+
     # Lowercase the words
     word1_l = word1.lower()
     word2_l = word2.lower()
-    
+
     # Remove symbols and punctuation characters
     def remove_symbols(word: str) -> str:
         # Filter out characters classified as punctuation or symbols
@@ -182,13 +181,13 @@ def _is_similar(word1: str, word2: str, max_diff_percantage: float = -1.0) -> bo
             char for char in word 
             if not unicodedata.category(char).startswith(('P', 'S'))
         )
-    
+
     word1_clean = remove_symbols(word1_l)
     word2_clean = remove_symbols(word2_l)
 
     if max_diff_percantage == -1.0:
         return word1_clean == word2_clean
-    
+
     diff = similarity_difflib(word1_clean, word2_clean)
 
     return diff >= max_diff_percantage
@@ -201,11 +200,11 @@ def _mean_absolute_deviation(data: List[float]) -> float:
 def time_difference(live_dps: List[DataPackage[data.AudioData]], transcript: List[data.Word], offset: float = 0.4) -> Tuple[float, float, float]:
     transcript_list: List[data.Word] = transcript.copy()
     diff: List[float] = []
-    
+
     for i, live_dp in enumerate(live_dps):
         if live_dp.data is None:
             continue
-        
+
         live_words_confirmed = live_dp.data.confirmed_words
         if live_words_confirmed is not None:
             correct_diff_words = []
@@ -218,26 +217,26 @@ def time_difference(live_dps: List[DataPackage[data.AudioData]], transcript: Lis
                 if word_in_transcript is not None:
                     correct_diff_words.append(tword)
                     to_remove.append(tword)
-                    
+
             for tword in to_remove:
                 transcript_list.remove(tword)
-            
+
             diff_words_end = [word.end for word in correct_diff_words]
-            
+
             if live_dp.data.audio_buffer_start_after is None or live_dp.data.audio_buffer_time is None:
                 continue
-            
+
             processing_time = live_dp.end_time - live_dp.start_time
             current_audio_buffer_time = live_dp.data.audio_buffer_start_after + live_dp.data.audio_buffer_time
             output_time = current_audio_buffer_time + processing_time
-            
+
             diff_words_time = [output_time - end for end in diff_words_end]
             diff.extend(diff_words_time)
-    
+
     mean_diff = statistics.mean(diff) if diff else 0.0
     std_dev = statistics.stdev(diff) if len(diff) > 1 else 0.0
     mad = _mean_absolute_deviation(diff) if diff else 0.0
-    
+
     print(f"Timedifference: {len(diff)}/{len(transcript_list)} found")
     return mean_diff, std_dev, mad
 
@@ -251,13 +250,13 @@ def stats(live_dps: List[DataPackage[data.AudioData]], transcript: List[data.Wor
 
     if live_words is None:
         raise ValueError("No data found")
-    
+
     diff = compute_statistics(live_words, transcript)
 
     def to_lower_no_symbols(word: str) -> str:
         word_l = word.lower()
         return ''.join(char for char in word_l if not unicodedata.category(char).startswith(('P', 'S')))
-    
+
     live_clean = [
         data.Word(to_lower_no_symbols(word.word), word.start, word.end, word.probability)
         for word in live_words
