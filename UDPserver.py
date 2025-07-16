@@ -43,7 +43,7 @@ class Client:
                 logging.error(f"Invalid number of parameters for 'on_message' event. Expected 2, got {num_params}.")
         else:
             logging.warning(f"Unsupported event type: {event_type}")
-            
+
         return -1
 
     def remove_event(self, event_type: str, callback_id: int) -> None:
@@ -164,7 +164,7 @@ class Server:
             return self._connected_callbacks.add_event(callback)
         else:
             logging.error(f"Invalid number of parameters for 'on_connected' event. Expected 1, got {num_params}.")
-            
+
         return -1
 
     def remove_on_connected(self, callback_id: int) -> None:

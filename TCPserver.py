@@ -102,10 +102,10 @@ class Client:
     def _validate_token(self) -> bool:
         """Validate the token sent by the client."""
         logging.debug(f"Client[{self.addr}] Validating token.")
-        
+
         if self.conn is None:
             return False
-        
+
         while self._running:
             try:
                 current_time = time.time()
@@ -132,7 +132,7 @@ class Client:
                 else:
                     self._handle_socket_errors(e)
                 return False
-            
+
         return False
 
     def _handle_ping(self) -> None:
@@ -156,10 +156,10 @@ class Client:
     def _listen_for_clientkey(self) -> bool:
         """Listen for the client's key."""
         logging.debug(f"Client[{self.addr}] Listening for client key.")
-        
+
         if self.conn is None or self.server_privatekey is None:
             return False
-        
+
         while self._running:
             try:
                 current_time = time.time()
@@ -198,7 +198,7 @@ class Client:
                 else:
                     self._handle_socket_errors(e)
                 return False
-            
+
         return False
 
     def _send_server_publickey(self) -> None:
@@ -218,7 +218,7 @@ class Client:
     def _decrypt(self, encrypted_data: bytes) -> bytes:
         """Decrypt the received data."""
         logging.debug(f"Client[{self.addr}] Decrypting data")
-        
+
         if self.client_key is None or self.client_initkey is None:
             return b""
 
@@ -251,10 +251,10 @@ class Client:
     def _listen(self) -> None:
         """Private method to listen for incoming data from the client."""
         logging.debug(f"Client[{self.addr}] Listening for data.")
-        
+
         if self.conn is None:
             return
-        
+
         while self._running:
             try:
                 current_time = time.time()
@@ -446,7 +446,7 @@ class Server:
 
             try:
                 logging.debug("Waiting for client...")
-                
+
                 if self._socket is None:
                     logging.error("Server socket is None. Stopping client acceptance.")
                     break
@@ -527,7 +527,7 @@ class Server:
         if num_params != 1:
             logging.error(f"Invalid number of parameters for 'connected' event. Expected 1, got {num_params}.")
             return -1
-        
+
         return self._connected_callbacks.add_event(callback)
 
     def remove_connected_event(self, event_id: int) -> None:

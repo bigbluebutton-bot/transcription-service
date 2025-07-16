@@ -23,12 +23,12 @@ class Client:
     def udp_address(self) -> Tuple[str, int | None]:
         """Return the client's UDP address."""
         return self._udpclient.address()
-    
+
     def tcp_address(self) -> Tuple[str, int]:
         """Return the client's TCP address."""
         address = self._tcpclient.address()
         return (address[0], address[1] or 0)
-    
+
     def stop(self) -> None:
         logging.debug(f"Stopping client {self._tcpclient.address()}, {self._udpclient.address()}.")
         self._tcpclient.stop()
@@ -42,31 +42,31 @@ class Client:
     def on_tcp_message(self, callback: Callable[['Client', bytes], None]) -> Optional[int]:
         """Register a new TCP message callback."""
         return self._tcpclient.on_event("message", lambda c, d: callback(self, d))
-    
+
     def remove_on_tcp_message(self, callback_id: int) -> None:
         """Remove a TCP message callback using its ID."""
         return self._tcpclient.remove_event("message", callback_id)
-    
+
     def on_udp_message(self, callback: Callable[['Client', bytes], None]) -> Optional[int]:
         """Register a new UDP message callback."""
         return self._udpclient.on_event("message", lambda c, d: callback(self, d))
-    
+
     def remove_on_udp_message(self, callback_id: int) -> None:
         """Remove a UDP message callback using its ID."""
         return self._udpclient.remove_event("message", callback_id)
-    
+
     def on_disconnected(self, callback: Callable[['Client'], None]) -> Optional[int]:
         """Register a new disconnected callback."""
         return self._tcpclient.on_event("disconnected", lambda c: callback(self))
-    
+
     def remove_on_disconnected(self, callback_id: int) -> None:
         """Remove a disconnected callback using its ID."""
         return self._tcpclient.remove_event("disconnected", callback_id)
-    
+
     def on_timeout(self, callback: Callable[['Client'], None]) -> Optional[int]:
         """Register a new timeout callback."""
         return self._tcpclient.on_event("timeout", lambda c: callback(self))
-    
+
     def remove_on_timeout(self, callback_id: int) -> None:
         """Remove a timeout callback using its ID."""
         return self._tcpclient.remove_event("timeout", callback_id)
@@ -130,10 +130,10 @@ class Server:
             clienthost = tcpclient.address()[0]
             aes_key = tcpclient.client_key
             aes_initkey = tcpclient.client_initkey
-            
+
             if aes_key is None or aes_initkey is None:
                 raise ValueError("AES key or initialization key is None.")
-            
+
             udpclient = self._udpserver.add_client(clienthost, aes_key, aes_initkey)
 
             # 2. add tcp and udp client to self._clients
@@ -183,13 +183,13 @@ class Server:
         if num_params != 1:
             logging.error(f"Invalid number of parameters for 'connected' event. Expected 1, got {num_params}.")
             return -1
-        
+
         return self._connected_callbacks.add_event(callback)
-    
+
     def remove_on_connected(self, callback_id: int) -> None:
         """Remove a connected callback using its ID."""
         return self._connected_callbacks.remove_event(callback_id)
-    
+
     def _remove_client(self, client: Client) -> None:
         """Remove a client from the server's client list."""
         logging.debug(f"Removing client: {client.tcp_address()}, {client.udp_address()}")

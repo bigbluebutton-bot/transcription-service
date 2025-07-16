@@ -103,7 +103,7 @@ simulation_pipeline_list = [
                         "label": "module_name|pipeline_name",
                     }
                 ),
-                
+
                 Prometheus_URL(
                     scheme=scheme,
                     netloc=netloc,
@@ -116,7 +116,7 @@ simulation_pipeline_list = [
                         "label": "pipeline_name|module_name",
                     }
                 ),
-                
+
                 # Exit flowrate of each model
                 Prometheus_URL(
                     scheme=scheme,
@@ -241,17 +241,16 @@ simulation_pipeline_list = [
                     ]
                 )
             ],
-                                            
+
         ),
     ),
-    
-    
+
 
 
     Simulation_Pipeline(
         name = "2-10s-2flowrate-nobatching-2confirm",
         prometheus_url = [
-            
+
                 # stats processing time
                 Prometheus_URL(
                     scheme=scheme,
@@ -265,7 +264,7 @@ simulation_pipeline_list = [
                         "label": "module_name|pipeline_name",
                     }
                 ),
-            
+
                 # Processing Time
                 Prometheus_URL(
                     scheme=scheme,
@@ -358,17 +357,16 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
 
 
-    
-    
+
     Simulation_Pipeline(
         name = "3-30s-2flowrate-batching-2confirm",
         prometheus_url = [
-            
+
                 # stats processing time
                 Prometheus_URL(
                     scheme=scheme,
@@ -382,7 +380,7 @@ simulation_pipeline_list = [
                         "label": "module_name|pipeline_name",
                     }
                 ),
-            
+
                 # Processing Time
                 Prometheus_URL(
                     scheme=scheme,
@@ -475,7 +473,7 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
 
@@ -484,7 +482,7 @@ simulation_pipeline_list = [
     Simulation_Pipeline(
         name = "4-30s-2flowrate-nobatching-2confirm",
         prometheus_url = [
-            
+
                 # stats processing time
                 Prometheus_URL(
                     scheme=scheme,
@@ -498,7 +496,7 @@ simulation_pipeline_list = [
                         "label": "module_name|pipeline_name",
                     }
                 ),
-            
+
                 # Processing Time
                 Prometheus_URL(
                     scheme=scheme,
@@ -591,14 +589,10 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-        
-        
-        
-        
-        
+
 
 
 
@@ -680,12 +674,10 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-        
-        
-        
+
 
 
 
@@ -767,12 +759,10 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-        
-        
-        
+
 
 
 
@@ -854,11 +844,9 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-        
-        
 
 
 
@@ -941,16 +929,9 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-
-
-
-
-
-
-
 
 
 
@@ -1033,12 +1014,9 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-        
-        
-        
 
 
 
@@ -1120,12 +1098,10 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-        
-        
-        
+
 
 
 
@@ -1207,11 +1183,9 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
-        
-        
 
 
 
@@ -1294,7 +1268,7 @@ simulation_pipeline_list = [
                         )
                     ]
                 )
-            ],         
+            ],
         ),
     ),
 ]
@@ -1308,7 +1282,7 @@ def callback(dp: DataPackage[data.AudioData]) -> None:
     if dp.data and dp.data.transcribed_segments:
         with result_mutex:
             result.append(dp)
-            
+
         processing_time = dp.total_time
 
         if dp.data.confirmed_words is not None:
@@ -1316,10 +1290,10 @@ def callback(dp: DataPackage[data.AudioData]) -> None:
 
         if dp.data.unconfirmed_words is not None:
             only_words_u = [w.word for w in dp.data.unconfirmed_words]
-            
+
         if len(only_words_c) > 50:
             only_words_c = only_words_c[-50:]
-            
+
         # print(f"({new_words}){only_words_c} ++ {only_words_u}")
         print(f"{processing_time:2f}:  {only_words_c} ")
     pass
@@ -1361,7 +1335,7 @@ audio_extensions = [
 def main() -> None:
     input_folder  = './audio'
     output_folder = './simulate_results'
-    
+
     # Create the output folder if it doesn't exist
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -1371,14 +1345,14 @@ def main() -> None:
         if not any(folder_name.endswith(ext) for ext in audio_extensions):
             print(f"Skipping non-audio file: {folder_name}")
             continue
-        
+
         new_output_folder = os.path.join(output_folder, os.path.splitext(folder_name)[0])  # Create folder for each file
         if not os.path.exists(new_output_folder):
             os.makedirs(new_output_folder)
 
         input_file = os.path.join(input_folder, folder_name)
         output_file = os.path.join(new_output_folder, os.path.splitext(folder_name)[0] + '.ogg')
-        
+
         # Skip if the output file already exists
         if os.path.exists(output_file):
             continue
@@ -1395,24 +1369,22 @@ def main() -> None:
             print(f"Converted: {folder_name} -> {output_file}")
         except Exception as e:
             print(f"Error processing file {folder_name}: {e}")
-    
+
     for folder_name in os.listdir(output_folder):
         new_output_folder = os.path.join(output_folder, os.path.splitext(folder_name)[0])
         file_path = os.path.join(new_output_folder, folder_name + ".ogg")
         new_file_beginning = os.path.join(new_output_folder, folder_name)
-        
+
         if not file_path.endswith(".ogg"):
             print(f"Skipping non-audio file: {folder_name}")
             continue
-        
+
 
         for simulation_pipeline in simulation_pipeline_list:
             # clear data
             with result_mutex:
                 result.clear()
-            
             new_file_beginning_simulation = new_file_beginning + f"_{simulation_pipeline.name}"
-            
             start_time = end_time = time.time()
             if not os.path.exists(f"{new_file_beginning_simulation}_simulation.pkl"):
                 # create pipeline
@@ -1428,12 +1400,12 @@ def main() -> None:
                                     callback=callback,
                                     error_callback=error_callback
                                     )
-                
+
                 start_time = time.time()
                 simulate_live_audio_stream(file_path, simulated_callback)
                 end_time = time.time()
                 time.sleep(5)
-                
+
                 pipeline.unregister_instance(instance)
                 del pipeline
 
@@ -1441,8 +1413,8 @@ def main() -> None:
                     data_list = [(dat.data, dat.start_time, dat.end_time) for dat in result if dat.data is not None]
                     with open(f"{new_file_beginning_simulation}_simulation.pkl", 'wb') as file:
                         pickle.dump(data_list, file)
-                        
-                        
+
+
                 # Save graphes from url
                 start = datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')
                 end = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
@@ -1450,15 +1422,15 @@ def main() -> None:
                 for i, url in enumerate(urls):
                     if os.path.exists(f"{new_file_beginning_simulation}_{i}_graph.png"):
                         continue
-                    
+
                     url_copy = url.copy()
-                    
+
                     if url_copy.path == "/graph":
                         url_copy.query["query"] = url_copy.query["query"].replace("PIPELINEID", pipeline_id)
                         url_copy.query["start"] = start
                         url_copy.query["end"] = end
                         print(url_copy)
-                    
+
                         response = requests.get(url_copy)
 
                         # Check if the request was successful
@@ -1468,20 +1440,20 @@ def main() -> None:
                                 file.write(response.content)
                         else:
                             print(f"Failed to download image. Status code: {response.status_code}")
-                            
+
                     elif url_copy.path == "/stats":
                         url_copy.query["query"] = url_copy.query["query"].replace("PIPELINEID", pipeline_id)
                         url_copy.query["start"] = start
                         url_copy.query["end"] = end
                         print(url_copy)
-                    
+
                         statsresponse = requests.get(url_copy)
 
                         if statsresponse.status_code == 200:
                             try:
                                 # Attempt to parse the content as JSON
                                 response_data = statsresponse.json()
-                                
+
                                 # Save the content as a JSON file
                                 with open(f"{new_file_beginning_simulation}_{i}_stats.json", 'w') as statsfile:
                                     import json
@@ -1490,7 +1462,7 @@ def main() -> None:
                                 print("Failed to parse the response as JSON.")
                         else:
                             print(f"Failed to download data. Status code: {statsresponse.status_code}")
-                        
+
 
             if not os.path.exists(f"{new_file_beginning}_transcript.pkl"):
                 transcript = transcribe_audio(file_path, faster_whisper_model_path)
@@ -1502,7 +1474,7 @@ def main() -> None:
             # Load the pkl file
             with open(f"{new_file_beginning_simulation}_simulation.pkl", 'rb') as read_file:
                 live_data: list[tuple[data.AudioData, float, float]] = pickle.load(read_file) # type: ignore
-                
+
             with open(f"{new_file_beginning}_transcript.pkl", 'rb') as read_file:
                 transcript_words: List[data.Word] = pickle.load(read_file) # type: ignore
 
@@ -1543,7 +1515,7 @@ def main() -> None:
                 with open(f"{new_file_beginning_simulation}_stats.txt", "w") as file:
                     file.write(f"-------------------------------------------------------------------\n")
                     file.write(f"File: {file_path}\n")
-                    file.write(f"-------------------------------------------------------------------\n")
+                    file.write("-------------------------------------------------------------------\n")
                     file.write(f"Average time difference between live and transcript: {stat_avg_time_difference * 1000:.1f} milliseconds\n")
                     file.write(f"Standard deviation of time difference: {stat_std_dev * 1000:.1f} milliseconds\n")
                     file.write(f"Mean absolute deviation of time difference: {stat_mad * 1000:.1f} milliseconds\n")
@@ -1572,11 +1544,10 @@ def main() -> None:
                 
             print(f"File: {folder_name}")
             save_stats(stat_sensitive, stat_insensitive, avg_time_difference, std_dev, mad)
-            
             try:
                 subprocess.run(['chmod', '777', output_folder, '-R'])
             except Exception as e:
                 pass
-    
+
 if __name__ == "__main__":
     main()

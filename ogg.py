@@ -92,7 +92,7 @@ class OggS_Page:
         endianness: Literal['little', 'big'] = self.endianness
         if len(page_data) < 27 or page_data[0:4] != b'OggS':
             raise ValueError("Invalid OggS page data.")
-        
+
         # Extract header information
         self.capture_pattern = page_data[0:4]
         self.version = page_data[4]
@@ -151,7 +151,7 @@ class OPUS_Id_Header:
     output_gain: int = field(init=False)                # Output gain in dB
     mapping_family: int = field(init=False)             # Channel mapping family
     optional_mapping_table: bytes = field(init=False)   # Optional channel mapping table
-    
+
     def __post_init__(self) -> None:
         """Extract the ID Header details from the page data."""
         self._from_page()
@@ -203,7 +203,7 @@ class OPUS_Comment_Header:
     def __post_init__(self) -> None:
         """Extract the Comment Header details from the pages."""
         self._from_pages()
-    
+
     def _from_pages(self) -> None:
         """Extract the Comment Header details from the pages."""
         # Concatenate the data from all pages belonging to the comment header
@@ -215,7 +215,7 @@ class OPUS_Comment_Header:
 
         # Skip the 'OpusTags' string (8 bytes)
         offset: int = 8
-        
+
         # Read the Vendor String Length (4 bytes, little-endian)
         self.vendor_string_length = int.from_bytes(data[offset:offset + 4], 'little')
         offset += 4
@@ -234,14 +234,14 @@ class OPUS_Comment_Header:
             # Read the User Comment #N String Length (4 bytes, little-endian)
             if offset + 4 > len(data):
                 raise ValueError("Unexpected end of data while reading user comment length.")
-            
+
             user_comment_length: int = int.from_bytes(data[offset:offset + 4], 'little')
             offset += 4
 
             # Read the User Comment #N String
             if offset + user_comment_length > len(data):
                 raise ValueError("Unexpected end of data while reading user comment.")
-            
+
             user_comment: str = data[offset:offset + user_comment_length].decode('utf-8')
             self.user_comments.append(user_comment)
             offset += user_comment_length
@@ -329,7 +329,7 @@ class Ogg_OPUS_Audio:
                 opus_id_header: OPUS_Id_Header = OPUS_Id_Header(page)
                 return opus_id_header
         return None
-    
+
     def _extract_comment_header(self) -> Optional[OPUS_Comment_Header]:
         """
         Extract the Comment Header pages from the Ogg Opus stream and return the pages and a list of OPUS_Comment_Header objects.
@@ -358,7 +358,7 @@ class Ogg_OPUS_Audio:
 
         opus_comment_header: OPUS_Comment_Header = OPUS_Comment_Header(comment_header_pages)
         return opus_comment_header
-    
+
     def _calculate_page_duration(self) -> None:
         """Calculate the duration of each page in the audio data."""
         pages = self.pages
@@ -366,12 +366,12 @@ class Ogg_OPUS_Audio:
             return
         id_header_page = self.id_header.page
         comment_header_pages = self.comment_header.pages
-        
+
         sample_rate = self.id_header.input_sample_rate
-        
+
         # Remove id_header_page and comment_header_pages from pages
         # pages = [page for page in pages if page != id_header_page and page not in comment_header_pages]
-        
+
         complete_duration = 0.0
         previous_granule_position: int = pages[0].granule_position
         for page in pages[1:]:
@@ -380,24 +380,24 @@ class Ogg_OPUS_Audio:
             duration = samples / sample_rate
             page.duration = duration
             complete_duration += duration
-            
+
             previous_granule_position = current_granule_position
-            
+
         self.duration = complete_duration
-            
-            
+
+
 def calculate_page_duration(current_granule_position: int, previous_granule_position: Optional[int], sample_rate: int = 48000) -> float:
     if previous_granule_position is None:
         return 0.0  # Default value for the first frame
     samples = current_granule_position - previous_granule_position
     duration = samples / sample_rate
-    return duration            
+    return duration
 
 
 
 def __main__() -> None:
     file_path: str = 'audio/bbb.ogg'
-    
+
     ogg_data: bytes = b""
     try:
         with open(file_path, "rb") as file:
@@ -408,12 +408,12 @@ def __main__() -> None:
     except IOError as e:
         print(f"An error occurred while reading {file_path}: {e}")
         exit(1)
-    
+
     audio: Ogg_OPUS_Audio = Ogg_OPUS_Audio(ogg_data)
-    
+
     # Print the total number of pages and some details about each page
     print(f"Total pages: {len(audio.pages)}")
-    
+
     # OPUS
     id_header: Optional[OPUS_Id_Header] = audio.id_header
     if id_header is not None:
@@ -428,8 +428,7 @@ def __main__() -> None:
         print(f"  CRC Checksum: {id_header_page.CRC_checksum}")
         print(f"  Segment Count: {id_header_page.segment_count}")
         print(f"  Data Length: {len(id_header_page.data)} bytes")
-        
-        print(f"OPUS ID Header:")
+        print("OPUS ID Header:")
         print(f"  Version: {id_header.version}")
         print(f"  Channel Count: {id_header.channel_count}")
         print(f"  Pre-skip: {id_header.pre_skip}")
@@ -440,9 +439,7 @@ def __main__() -> None:
     else:
         print("No ID header page found.")
         exit(1)
-    
     print(f"\n")
-    
     comment_header: Optional[OPUS_Comment_Header] = audio.comment_header
     if comment_header is not None:
         comment_header_pages: List[OggS_Page] = comment_header.pages
@@ -457,22 +454,20 @@ def __main__() -> None:
             print(f"  Page Sequence Number: {page.page_sequence_number}")
             print(f"  CRC Checksum: {page.CRC_checksum}")
             print(f"  Segment Count: {page.segment_count}")
-            print(f"  Data Length: {len(page.data)} bytes")
-            
-        print(f"OPUS Comment Header:")
+            print(f"  Data Length: {len(page.data)} bytes") 
+        print("OPUS Comment Header:")
         print(f"  Vendor String Length: {comment_header.vendor_string_length}")
         print(f"  Vendor String: {comment_header.vendor_string}")
         print(f"  User Comment List Length: {len(comment_header.user_comments)}")
         for index, user_comment in enumerate(comment_header.user_comments):
             print(f"  User Comment {index + 1}: {user_comment}")
-            
+
     else:
         print("No Comment header pages found.")
         exit(1)
-    
     print(f"\n")
     # print duration hours, minutes, seconds
     print(f"Duration: {int(audio.duration / 3600)}:{int((audio.duration % 3600) / 60)}:{int(audio.duration % 60)}")
-            
+
 if __name__ == "__main__":
     __main__()
