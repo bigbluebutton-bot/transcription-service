@@ -18,7 +18,7 @@ class TextSegment:
     start: float
     end: float
     words: Optional[List[Word]] = None
-    probability: Optional[float] = None # This is the probability of the word detected at this point in the audio. Not how likley the word is to be correct.
+    probability: Optional[float] = None # This is the probability of the word detected at this point in the audio. Not how likely the word is to be correct.
 
 # enum
 class Task(Enum):

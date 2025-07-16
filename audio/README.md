@@ -11,7 +11,7 @@ $ ffmpeg -i audio.ogg -c:a libopus -frame_duration 20 -page_duration 20000 -vn o
 ```
 
 ## Read the header of the file
-### Make shure that the file is a valid ogg file
+### Make sure that the file is a valid ogg file
 ```bash
 $ ffmpeg -i out.ogg -f ffmetadata - 2>&1 | grep -A 1 "Input #0"
 Input #0, ogg, from 'audio.ogg':
@@ -19,7 +19,7 @@ Input #0, ogg, from 'audio.ogg':
 ```
 If it does not show `Input #0, ogg` then the file is not a valid ogg file
 
-### Make shure inside the ogg data there is opus
+### Make sure inside the ogg data there is opus
 ```bash
 $ ffmpeg -i out.ogg -f ffmetadata - 2>&1 | grep -A 1 "Stream #0:0"
   Stream #0:0(eng): Audio: opus, 48000 Hz, stereo, fltp

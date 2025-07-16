@@ -28,7 +28,7 @@ start_http_server(8042)
 
 settings = load_settings()
 
-# load whisper singelton
+# load whisper singleton
 WhisperAIManager(
     model_path = settings["FASTER_WHISPER_MODEL_PATH"],
     model_size = settings["FASTER_WHISPER_MODEL_SIZE"], #tiny, tiny.en, small, small.en, base, base.en, medium, medium.en, large-v1, large-v2, large-v3
