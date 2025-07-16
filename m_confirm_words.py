@@ -1,6 +1,6 @@
 # m_local_agreement.py
 import difflib
-from typing import List, Optional, Tuple
+from typing import List, Optional
 import unicodedata
 
 from stream_pipeline.data_package import DataPackage, DataPackageController, DataPackagePhase, DataPackageModule

@@ -1,7 +1,7 @@
 # data.py
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, List, Optional, Tuple, Union, Dict
+from typing import List, Optional, Tuple, Dict
 
 import numpy as np
 

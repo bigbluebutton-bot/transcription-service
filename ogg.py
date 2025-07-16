@@ -63,7 +63,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import List, Literal, Optional, Tuple
+from typing import List, Literal, Optional
 
 @dataclass
 class OggS_Page:

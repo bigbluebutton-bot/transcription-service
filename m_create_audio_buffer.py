@@ -2,7 +2,7 @@
 from typing import List, Optional
 
 from stream_pipeline.data_package import DataPackage, DataPackageController, DataPackagePhase, DataPackageModule, Status
-from stream_pipeline.module_classes import Module, ExecutionModule, ModuleOptions
+from stream_pipeline.module_classes import ExecutionModule, ModuleOptions
 
 from ogg import Ogg_OPUS_Audio, OggS_Page, calculate_page_duration
 import data
