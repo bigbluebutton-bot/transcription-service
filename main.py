@@ -264,7 +264,7 @@ def main() -> None:
             # print(f"UDP from: {c.tcp_address()}")
             with client_dict_mutex:
                 if not c in [value.stream_client for value in client_dict.values()]:
-                    print(f"Client not in client_dict")
+                    print("Client not in client_dict")
                     c.stop()
                     return
 
@@ -289,7 +289,7 @@ def main() -> None:
 
         def ontcpmsg(c: StreamClient, message: bytes) -> None:
             if not c in [value.stream_client for value in client_dict.values()]:
-                print(f"Client not in client_dict")
+                print("Client not in client_dict")
                 c.stop()
                 return
 

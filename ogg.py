@@ -428,8 +428,7 @@ def __main__() -> None:
         print(f"  CRC Checksum: {id_header_page.CRC_checksum}")
         print(f"  Segment Count: {id_header_page.segment_count}")
         print(f"  Data Length: {len(id_header_page.data)} bytes")
-
-        print(f"OPUS ID Header:")
+        print("OPUS ID Header:")
         print(f"  Version: {id_header.version}")
         print(f"  Channel Count: {id_header.channel_count}")
         print(f"  Pre-skip: {id_header.pre_skip}")
@@ -440,9 +439,7 @@ def __main__() -> None:
     else:
         print("No ID header page found.")
         exit(1)
-
     print(f"\n")
-
     comment_header: Optional[OPUS_Comment_Header] = audio.comment_header
     if comment_header is not None:
         comment_header_pages: List[OggS_Page] = comment_header.pages
@@ -457,9 +454,8 @@ def __main__() -> None:
             print(f"  Page Sequence Number: {page.page_sequence_number}")
             print(f"  CRC Checksum: {page.CRC_checksum}")
             print(f"  Segment Count: {page.segment_count}")
-            print(f"  Data Length: {len(page.data)} bytes")
-
-        print(f"OPUS Comment Header:")
+            print(f"  Data Length: {len(page.data)} bytes") 
+        print("OPUS Comment Header:")
         print(f"  Vendor String Length: {comment_header.vendor_string_length}")
         print(f"  Vendor String: {comment_header.vendor_string}")
         print(f"  User Comment List Length: {len(comment_header.user_comments)}")
@@ -469,7 +465,6 @@ def __main__() -> None:
     else:
         print("No Comment header pages found.")
         exit(1)
-
     print(f"\n")
     # print duration hours, minutes, seconds
     print(f"Duration: {int(audio.duration / 3600)}:{int((audio.duration % 3600) / 60)}:{int(audio.duration % 60)}")

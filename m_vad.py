@@ -252,7 +252,7 @@ class Binarize:
         # also: fill same speaker gaps shorter than min_duration_off
         if self.pad_offset > 0.0 or self.pad_onset > 0.0 or self.min_duration_off > 0.0:
             if self.max_duration < float("inf"):
-                raise NotImplementedError(f"This would break current max_duration param")
+                raise NotImplementedError("This would break current max_duration param")
             active = active.support(collar=self.min_duration_off)
 
         # remove tracks shorter than min_duration_on
@@ -353,7 +353,7 @@ class VAD(Module):
         self._model: Optional[VoiceActivitySegmentation] = None
 
     def init_module(self) -> None:
-        log.info(f"Loading model vad...")
+        log.info("Loading model vad...")
         self._model = self.load_vad_model(device=self.device, vad_onset=self.vad_onset, vad_offset=self.vad_offset, use_auth_token=self.use_auth_token, model_fp=self.model_fp)
         log.info("VAD model loaded")
 
