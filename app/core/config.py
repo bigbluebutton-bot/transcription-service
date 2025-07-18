@@ -34,6 +34,33 @@ def _str_to_bool(value: str) -> bool:
     return value.lower() in {"1", "true", "yes", "y", "on"}
 
 
+def _redis_nodes_converter(raw: Union[str, List[dict]]) -> List[dict]:
+    """
+    Accepts:
+      • "localhost:6379"           → [{"host": "localhost", "port": 6379}]
+      • "localhost:6381,localhost:6382,localhost:6383" → [{"host": "localhost", "port": 6381}, ...]
+      • already-built list of dicts -> returned unchanged
+    """
+    if isinstance(raw, list):  # already converted
+        return raw
+
+    if not isinstance(raw, str):
+        raise TypeError("Expected str for Redis nodes env var")
+    
+    # This is a direct converter for the environment variable format
+    # It processes the entire string at once, not individual parts
+    nodes = []
+    for node in raw.split(","):
+        if ":" in node:
+            host, port = node.strip().split(":")
+            nodes.append({"host": host, "port": int(port)})
+        else:
+            # Default port if not specified
+            nodes.append({"host": node.strip(), "port": 6379})
+            
+    return nodes
+
+
 def _rate_limiter_converter(raw: Union[str, RateLimiter]) -> RateLimiter:
     """
     Accepts:
@@ -99,8 +126,7 @@ class Config:
         metadata={"env": "API_V1_PREFIX"},
     )
     
-    # CORS origins are handled via the backend_cors_origins property
-    _backend_cors_origins: List[str] = field(
+    BACKEND_CORS_ORIGINS: List[str] = field(
         default_factory=lambda: ["http://localhost", "http://localhost:8000", "http://localhost:3000"],
         metadata={"env": "BACKEND_CORS_ORIGINS"},
     )
@@ -133,6 +159,11 @@ class Config:
     REDIS_URL: str = field(
         default="redis://localhost:6379",
         metadata={"env": "REDIS_URL"},
+    )
+    
+    REDIS_CLUSTER_NODES: List[dict] = field(
+        default_factory=lambda: [{"host": "localhost", "port": 6379}],
+        metadata={"env": "REDIS_CLUSTER_NODES"},
     )
 
     SESSION_DURATION_SECONDS: int = field(
@@ -255,16 +286,10 @@ class Config:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         if self._initialized:
             return
-        # Set default values for critical attributes that might not be properly initialized
-        self._backend_cors_origins = ["http://localhost", "http://localhost:8000", "http://localhost:3000"]
         # At this point the auto-generated dataclass __init__ has run
         # so the defaults are already assigned.
         self._load_from_env()
         self._initialized = True
-        
-    @property
-    def backend_cors_origins(self) -> List[str]:
-        return self._backend_cors_origins
 
     # ---------------- private helpers ----------------
 
@@ -282,6 +307,18 @@ class Config:
             # keep default if nothing provided
             if raw is None:
                 continue
+
+            # Special handling for REDIS_CLUSTER_NODES
+            if env_name == "REDIS_CLUSTER_NODES":
+                try:
+                    value = _redis_nodes_converter(raw)
+                    setattr(self, f.name, value)
+                    continue
+                except Exception as exc:
+                    errors.append(
+                        f"{env_name}={raw!r}: {exc}. Using default {getattr(self, f.name)!r}."
+                    )
+                    continue
 
             # convert str -> annotated type
             try:
@@ -350,13 +387,7 @@ class Config:
 
         raise TypeError(f"Don't know how to cast {raw!r} to {to_type}")
 
-
-
-# -------------------------------------------------------------------------
-# Convenience alias to access the singleton quickly throughout the codebase
-# -------------------------------------------------------------------------
-# Create a settings instance that can be imported elsewhere
-settings = Config.get()
+CONFIG = Config()
 
 if __name__ == "__main__":
     settings1 = Config.get()

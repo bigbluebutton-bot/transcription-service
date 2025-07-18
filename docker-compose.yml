@@ -71,63 +71,55 @@ services:
     image: redis:7.2-alpine
     container_name: redis_1_dev
     restart: unless-stopped
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6381 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
     volumes:
       - ./data/redis-1:/data
-    networks:
-      - dev-net
+    network_mode: host
 
   redis-2:
     image: redis:7.2-alpine
     container_name: redis_2_dev
     restart: unless-stopped
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6382 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
     volumes:
       - ./data/redis-2:/data
-    networks:
-      - dev-net
+    network_mode: host
 
   redis-3:
     image: redis:7.2-alpine
     container_name: redis_3_dev
     restart: unless-stopped
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6383 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
     volumes:
       - ./data/redis-3:/data
-    networks:
-      - dev-net
+    network_mode: host
 
   redis-4:
     image: redis:7.2-alpine
     container_name: redis_4_dev
     restart: unless-stopped
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6384 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
     volumes:
       - ./data/redis-4:/data
-    networks:
-      - dev-net
+    network_mode: host
 
   redis-5:
     image: redis:7.2-alpine
     container_name: redis_5_dev
     restart: unless-stopped
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6385 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
     volumes:
       - ./data/redis-5:/data
-    networks:
-      - dev-net
+    network_mode: host
 
   redis-6:
     image: redis:7.2-alpine
     container_name: redis_6_dev
     restart: unless-stopped
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
-    ports: # Expose one port for clients and the UI
-      - "6379:6379"
+    command: redis-server --port 6386 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
     volumes:
       - ./data/redis-6:/data
-    networks:
-      - dev-net
+    network_mode: host
 
   redis-commander:
     image: rediscommander/redis-commander:latest

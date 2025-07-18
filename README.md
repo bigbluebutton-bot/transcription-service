@@ -34,7 +34,7 @@ docker compose exec mongo1 mongosh -u "admin" -p "admin" --authenticationDatabas
 
 # STEP 3: Create the Redis cluster
 echo "Creating Redis cluster..."
-docker compose exec redis-1 redis-cli --cluster create redis-1:6379 redis-2:6379 redis-3:6379 redis-4:6379 redis-5:6379 redis-6:6379 --cluster-replicas 1 --cluster-yes
+docker compose exec redis-1 redis-cli --cluster create 127.0.0.1:6381 127.0.0.1:6382 127.0.0.1:6383 127.0.0.1:6384 127.0.0.1:6385 127.0.0.1:6386 --cluster-replicas 1 --cluster-yes
 
 # Done
 echo "---"

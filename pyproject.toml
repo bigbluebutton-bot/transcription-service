@@ -18,6 +18,8 @@ dependencies = [
     "alembic>=1.12.0",
     "python-dotenv>=1.0.0",
     "httpx>=0.25.0",
+    "redis>=6.2.0",
+    "fastapi-limiter>=0.1.6",
 ]
 
 [project.optional-dependencies]

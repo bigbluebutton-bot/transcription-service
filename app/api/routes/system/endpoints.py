@@ -1,15 +1,13 @@
 import logging
 from fastapi import APIRouter, Depends
 from typing import List
-from config import Config, STATUS
+from app.core.config import CONFIG, STATUS
 from .schemas import APIendpointResponse, APIHealthResponse
 from fastapi.routing import APIRoute
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-CONFIG = Config()
 
 router = APIRouter(tags=["System"])
 
