@@ -27,7 +27,22 @@ from dotenv import load_dotenv
 # helpers & converters
 # ----------------------------------------------------------------------------
 
-STATUS: Literal["starting", "running", "stopping", "stopped"] = "starting"
+# Use a mutable object to allow modification from other modules
+type SystemStatusType = Literal["starting", "running", "stopping", "stopped"]
+class SystemStatus:
+    def __init__(self):
+        self.value: SystemStatusType = "starting"
+    
+    async def set(self, status: SystemStatusType):
+        self.value = status
+    
+    async def get(self) -> SystemStatusType:
+        return self.value
+    
+    async def __str__(self) -> str:
+        return str(self.value)
+
+STATUS = SystemStatus()
 
 def _str_to_bool(value: str) -> bool:
     """Return ``True`` for typical truthy strings ("1", "yes", "true", "on")."""
@@ -116,6 +131,11 @@ class Config:
     """
 
     # ---------------- field definitions ----------------
+    PROJECT_VERSION: str = field(
+        default="1.0.0",
+        metadata={"env": "PROJECT_VERSION"},
+    )
+
     NODE_ID: str = field(
         default=f"NODE-{uuid.uuid4()}",
         metadata={"env": "NODE_ID"},

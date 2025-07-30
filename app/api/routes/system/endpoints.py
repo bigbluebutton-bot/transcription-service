@@ -40,8 +40,8 @@ def list_endpoints() -> List[APIendpointResponse]:
     dependencies=[Depends(CONFIG.API_LVL2_RATE_LIMITER)],
     description="Check if the API is running"
 )
-def health() -> APIHealthResponse:
+async def health() -> APIHealthResponse:
     return APIHealthResponse(
-        status=STATUS,
-        version="1.0.0"
+        status=await STATUS.get(),
+        version=CONFIG.PROJECT_VERSION
     )

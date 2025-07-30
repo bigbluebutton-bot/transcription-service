@@ -1,10 +1,10 @@
 from pydantic import BaseModel
-from typing import Literal
+from app.core.config import SystemStatusType
 
 class APIendpointResponse(BaseModel):
     method: str
     path: str
 
 class APIHealthResponse(BaseModel):
-    status: Literal["starting", "running", "stopping", "stopped"]
+    status: SystemStatusType
     version: str

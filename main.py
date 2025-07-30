@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 from app.api.router import api_router
-from app.core.config import CONFIG
+from app.core.config import CONFIG, STATUS
 from typing import AsyncIterator
 
 from app.core.api_rate_limmiter import init_api_rate_limiter
@@ -24,6 +24,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # MongoDB
         await connect_to_mongo()
         await create_default_boss()
+
+        await STATUS.set("running")
 
         yield
     finally:
@@ -70,6 +72,5 @@ async def main() -> None:
     )
 
 if __name__ == "__main__":
-    STATUS = "running"
     asyncio.run(main())
-    STATUS = "stopped"
+    STATUS.set("stopped")
