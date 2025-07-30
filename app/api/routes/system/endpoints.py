@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["System"])
 
 @router.get(
-    "endpoints",
+    "/endpoints",
     response_model=List[APIendpointResponse],
     dependencies=[Depends(CONFIG.API_LVL2_RATE_LIMITER)],
     description="List all available API endpoints"
@@ -35,7 +35,7 @@ def list_endpoints() -> List[APIendpointResponse]:
     return endpoints
 
 @router.get(
-    "health",
+    "/health",
     response_model=APIHealthResponse,
     dependencies=[Depends(CONFIG.API_LVL2_RATE_LIMITER)],
     description="Check if the API is running"
