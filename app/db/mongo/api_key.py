@@ -26,7 +26,7 @@ class ApiKey(Document):
     id = StringField(primary_key=True, required=True, default=lambda: f"APIKEY-{uuid.uuid4()}")
     user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE) # type: ignore
     key_hash = StringField(required=True, unique=True)
-    created_at = DateTimeField(required=True, default=datetime.utcnow)
+    created_at = DateTimeField(required=True, default=datetime.now(timezone.utc))
     expiration = DateTimeField()
     roles = ListField(ReferenceField('Role'))
 
