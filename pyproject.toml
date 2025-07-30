@@ -21,6 +21,9 @@ dependencies = [
     "redis>=6.2.0",
     "fastapi-limiter>=0.1.6",
     "mypy>=1.17.0",
+    "mongoengine>=0.29.1",
+    "blinker>=1.9.0",
+    "bcrypt>=4.3.0",
 ]
 
 [project.optional-dependencies]

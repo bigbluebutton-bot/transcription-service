@@ -7,7 +7,7 @@ services:
     image: mongo:8.0
     container_name: mongo1_dev
     restart: always
-    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile
+    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile --port 27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
@@ -15,56 +15,50 @@ services:
       - ./data/mongo1:/data/db
       # Mount the keyfile
       - ./data/mongo/keyfile:/etc/mongo/keyfile
-    networks:
-      - dev-net
-    ports:
-      - "27017:27017"
+    network_mode: host
 
   mongo2:
     image: mongo:8.0
     container_name: mongo2_dev
     restart: unless-stopped
-    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile
+    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile --port 27018
     volumes:
       - ./data/mongo2:/data/db
       - ./data/mongo/keyfile:/etc/mongo/keyfile
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
-    networks:
-      - dev-net
+    network_mode: host
 
   mongo3:
     image: mongo:8.0
     container_name: mongo3_dev
     restart: unless-stopped
-    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile
+    command: mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo/keyfile --port 27019
     volumes:
       - ./data/mongo3:/data/db
       - ./data/mongo/keyfile:/etc/mongo/keyfile
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
-    networks:
-      - dev-net
+    network_mode: host
 
   mongo-express:
     image: mongo-express:latest
     container_name: mongo_express_dev
     restart: unless-stopped
-    ports:
-      - "8081:8081"
+    # ports:
+    #   - "8081:8081"
     environment:
       # Updated URL with credentials from the .env file
-      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&authSource=admin
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0&authSource=admin
       - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
       - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-admin}
     depends_on:
       - mongo1
       - mongo2
       - mongo3
-    networks:
-      - dev-net
+    network_mode: host
 
   # --- Redis Services ---
   redis-1:
