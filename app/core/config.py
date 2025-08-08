@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 # ----------------------------------------------------------------------------
 
 # Use a mutable object to allow modification from other modules
-type SystemStatusType = Literal["starting", "running", "stopping", "stopped"]
+SystemStatusType = Literal["starting", "running", "stopping", "stopped"]
 class SystemStatus:
     def __init__(self):
         self.value: SystemStatusType = "starting"

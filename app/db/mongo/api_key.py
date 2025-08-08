@@ -1,50 +1,83 @@
+from __future__ import annotations
 
-
-import base64
-from datetime import datetime, timezone
-import hashlib
 import uuid
-from typing import Tuple, Optional, List
-
-from typing import ClassVar
-import mongoengine
-from mongoengine import Document, signals
-CASCADE = 2
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, ClassVar
+import bcrypt
+import base64
+from mongoengine import Document
 from mongoengine.fields import (
-    DateTimeField,
+    EmbeddedDocumentField,
     StringField,
     ListField,
-    ReferenceField,
+    EnumField,
+    DateTimeField,
+    BooleanField
 )
 
-from .user import User
-from .role import Role
+if TYPE_CHECKING:
+    from app.db.mongo.user import User
+
 
 class ApiKey(Document):
-    _signals_connected: ClassVar[bool] = False
-    
-    id = StringField(primary_key=True, required=True, default=lambda: f"APIKEY-{uuid.uuid4()}")
-    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE) # type: ignore
-    key_hash = StringField(required=True, unique=True)
-    created_at = DateTimeField(required=True, default=datetime.now(timezone.utc))
-    expiration = DateTimeField()
-    roles = ListField(ReferenceField('Role'))
+    """
+    API Key model for authenticating users.
 
-    meta = {
+    Attributes:
+        key (str): The unique API key, which is the primary key.
+        name (str): A user-defined name for the key for easy identification.
+        user (User): A reference to the user who owns the key.
+        is_active (bool): A flag to enable or disable the key.
+        created_at (datetime): The timestamp when the key was created.
+        updated_at (datetime): The timestamp when the key was last updated.
+        last_used (datetime): The timestamp when the key was last used.
+    """
+
+    meta: ClassVar[dict[str, str | list[str | tuple[str, str]]]] = {
         'collection': 'api_keys',
         'indexes': [
-            'key_hash',
-        ]
+            'user',
+            'created_at',
+            ('user', 'name'),  # Compound index for user-specific key names
+        ],
     }
+
+    key = StringField(primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = StringField(required=True, min_length=3, max_length=50)
+    user: User = ReferenceField('User', required=True, reverse_delete_rule=Document.CASCADE)  # type: ignore[assignment]
+    is_active = BooleanField(default=True)
+    disabled = BooleanField(default=False)
+
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    last_used = DateTimeField(null=True)
+
+    def save(self, *args, **kwargs) -> ApiKey:
+        """Override save to update timestamps and run validation."""
+        self.updated_at = datetime.now(timezone.utc)
+        return super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        """Validate and clean the data before saving."""
+        if self.name:
+            self.name = self.nastrip()
+
+    def __str__(self) -> str:
+        return f'ApiKey(name={self.name}, user={self.user.username if self.user else "N/A"})'
+
+    def __repr__(self) -> str:
+        return f'<ApiKey key={self.key} name={self.name}>'
 
     @staticmethod
     def hash_key(key: str) -> str:
         """
         Deterministically hash the key using PBKDF2 with a salt derived from the key.
         """
-        salt = ("key_salt" + key[::-1] + "key_salt").encode()
-        dk = hashlib.pbkdf2_hmac('sha256', key.encode(), salt, 100_000)
-        return base64.b64encode(dk).decode()
+        base64_salt = base64.b64encode(key.encode('utf-8')).decode('utf-8')
+        salt = ("key_salt" + base64_salt + "key_salt").encode()
+        hashed_bytes: bytes = bcrypt.hashpw(key.encode(), salt)
+        hashed: str = hashed_bytes.decode()
+        return hashed
 
     def verify_key(self, key: str) -> bool:
         """
@@ -52,32 +85,16 @@ class ApiKey(Document):
         """
         return self.hash_key(key) == self.key_hash
 
-    @classmethod
-    def create_key(cls, user: 'User', roles: Optional[List['Role']] = None, expiration: Optional[datetime] = None) -> Tuple['ApiKey', str]:
-        """
-        Creates a new APIKey instance and saves it to the database.
-        Returns the instance and the raw (unhashed) key.
-        The caller is responsible for adding this key to the user's api_keys list and saving the user.
-        """
-        raw_key = f"key-{uuid.uuid4()}"
-        key_hash = cls.hash_key(raw_key)
 
-        api_key = cls(
-            user=user,
-            key_hash=key_hash,
-            expiration=expiration,
-            roles=roles if roles else [],
-        )
-        api_key.save()
-        return api_key, raw_key
-
-    def is_expired(self) -> bool:
+    def is_valid(self) -> bool:
         """
-        Check if the API key is expired.
+        Check if the API key is expired or disabled. Returns true if the key is valid.
         """
-        if self.expiration is None:
+        if self.disabled:
             return False
-        return datetime.now(timezone.utc) > self.expiration
+        if self.expiration is None:
+            return True
+        return datetime.now(timezone.utc) < self.expiration
 
 # Connect the signal handler at the module level
 def cleanup_apikey_references(sender, document, **kwargs):

@@ -3,7 +3,7 @@ from redis.asyncio.cluster import RedisCluster, ClusterNode
 from app.core.config import CONFIG
 import logging
 
-async def get_redis_cluster(
+def get_redis_cluster(
     nodes: List[Dict[str, Any]] = CONFIG.REDIS_CLUSTER_NODES,
     decode_responses: bool = True,
     encoding: str = "utf-8",
