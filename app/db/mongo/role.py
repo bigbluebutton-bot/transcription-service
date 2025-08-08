@@ -72,21 +72,6 @@ class Role(Document):
         self.updated_at = datetime.now(timezone.utc)
         return super().save(*args, **kwargs)
     
-    def clean(self):
-        """Validate the document before saving."""
-        super().clean()
-        
-        # Validate rolename
-        if not self.rolename or not self.rolename.strip():
-            raise ValidationError('Role name cannot be empty')
-        
-        # Clean rolename
-        self.rolename = self.rolename.strip()
-        
-        # Validate rolename characters
-        if not re.match(r'^[a-zA-Z0-9\s_-]+$', self.rolename):
-            raise ValidationError('Role name can only contain letters, numbers, spaces, hyphens, and underscores')
-    
     def __str__(self):
         return f"Role(id={self.id}, rolename={self.rolename})"
     
