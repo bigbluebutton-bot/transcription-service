@@ -65,64 +65,73 @@ services:
     image: redis:7.2-alpine
     container_name: redis_1_dev
     restart: unless-stopped
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --aclfile /usr/local/etc/redis/users.acl
     volumes:
       - ./data/redis-1:/data
+      - ./data/redis/acl/users.acl:/usr/local/etc/redis/users.acl:ro
     network_mode: host
 
   redis-2:
     image: redis:7.2-alpine
     container_name: redis_2_dev
     restart: unless-stopped
-    command: redis-server --port 6382 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6382 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --aclfile /usr/local/etc/redis/users.acl
     volumes:
       - ./data/redis-2:/data
+      - ./data/redis/acl/users.acl:/usr/local/etc/redis/users.acl:ro
     network_mode: host
 
   redis-3:
     image: redis:7.2-alpine
     container_name: redis_3_dev
     restart: unless-stopped
-    command: redis-server --port 6383 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6383 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --aclfile /usr/local/etc/redis/users.acl
     volumes:
       - ./data/redis-3:/data
+      - ./data/redis/acl/users.acl:/usr/local/etc/redis/users.acl:ro
     network_mode: host
 
   redis-4:
     image: redis:7.2-alpine
     container_name: redis_4_dev
     restart: unless-stopped
-    command: redis-server --port 6384 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6384 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --aclfile /usr/local/etc/redis/users.acl
     volumes:
       - ./data/redis-4:/data
+      - ./data/redis/acl/users.acl:/usr/local/etc/redis/users.acl:ro
     network_mode: host
 
   redis-5:
     image: redis:7.2-alpine
     container_name: redis_5_dev
     restart: unless-stopped
-    command: redis-server --port 6385 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6385 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --aclfile /usr/local/etc/redis/users.acl
     volumes:
       - ./data/redis-5:/data
+      - ./data/redis/acl/users.acl:/usr/local/etc/redis/users.acl:ro
     network_mode: host
 
   redis-6:
     image: redis:7.2-alpine
     container_name: redis_6_dev
     restart: unless-stopped
-    command: redis-server --port 6386 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    command: redis-server --port 6386 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --aclfile /usr/local/etc/redis/users.acl
     volumes:
       - ./data/redis-6:/data
+      - ./data/redis/acl/users.acl:/usr/local/etc/redis/users.acl:ro
     network_mode: host
 
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: redis_commander_dev
+# Web UI for Redis
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: redisinsight
     restart: unless-stopped
+    volumes:
+      - ./data/redisinsight:/data
     ports:
-      - "8082:8081"
+      - "5540:5540"
     environment:
-      - REDIS_HOSTS=cluster:redis-1:6379
+      - RI_APP_HOST=0.0.0.0
     depends_on:
       - redis-1
       - redis-2
@@ -130,8 +139,6 @@ services:
       - redis-4
       - redis-5
       - redis-6
-    networks:
-      - dev-net
 
 # --- Network Definition ---
 networks:

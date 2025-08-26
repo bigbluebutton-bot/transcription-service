@@ -30,22 +30,28 @@ sleep 20
 
 # STEP 2: Initiate the MongoDB replica set
 echo "Initiating MongoDB replica set..."
-docker compose exec mongo1 mongosh -u "admin" -p "admin" --authenticationDatabase admin --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}, {_id: 1, host: "localhost:27018"}, {_id: 2, host: "localhost:27019"}]})'
+docker compose exec mongo1 mongosh -u "admin" -p "admin" --authenticationDatabase admin --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "172.30.40.131:27017"}, {_id: 1, host: "172.30.40.131:27018"}, {_id: 2, host: "172.30.40.131:27019"}]})'
+
+# Create Redis login data
+mkdir -p ./data/redis/acl
+echo "user admin on >admin allcommands allkeys" > ./data/redis/acl/users.acl
+chmod -R 777 ./data/redisinsight
+
 
 # STEP 3: Create the Redis cluster
 echo "Creating Redis cluster..."
-docker compose exec redis-1 redis-cli --cluster create 127.0.0.1:6379 127.0.0.1:6382 127.0.0.1:6383 127.0.0.1:6384 127.0.0.1:6385 127.0.0.1:6386 --cluster-replicas 1 --cluster-yes
+docker compose exec redis-1 redis-cli --cluster create 172.30.40.131:6379 172.30.40.131:6382 172.30.40.131:6383 172.30.40.131:6384 172.30.40.131:6385 172.30.40.131:6386 --cluster-replicas 1 --cluster-yes
 
 # Done
 echo "---"
 echo "Setup complete! Services are running."
 echo "Mongo Express: http://localhost:8081"
-echo "Redis Commander: http://localhost:8082"
+echo "Redis Insight: http://localhost:5540"
 
 # STEP 5: Setup venv
 uv venv
 source .venv/bin/activate
-uv pip install .
+uv pip install -e .
 
 # STEP 6: Run the application
 python main.py
